@@ -1,0 +1,30 @@
+/*
+ * Attendance System - Stylesheet
+ * 
+ * This file contains CSS styling for the attendance system.
+ * Currently a placeholder for future styling implementation.
+ * 
+ * Future enhancements:
+ * - Responsive design for mobile devices
+ * - Color scheme and typography
+ * - Button and input styling
+ * - Layout improvements
+ * - Animations and transitions
+ */
+
+/* Basic container styling */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Button styling will be added here */
+button {
+    /* Future button styling */
+}
+
+/* Input styling will be added here */
+input, select {
+    /* Future input styling */
+}

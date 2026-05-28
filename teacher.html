@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher - Attendance System</title>
+    <!-- Link to external CSS file for styling -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main container for teacher interface -->
+    <div class="container">
+        <h1>Teacher Dashboard</h1>
+        
+        <!-- Login section (shown by default) -->
+        <div id="login-section">
+            <h2>Login</h2>
+            <!-- Input for teacher name -->
+            <input type="text" id="teacher-name" placeholder="Your name">
+            <!-- Input for teacher ID -->
+            <input type="text" id="teacher-id" placeholder="Your teacher ID">
+            <!-- Input for password -->
+            <input type="password" id="teacher-password" placeholder="Password">
+            <!-- Button to login -->
+            <button onclick="login()">Login</button>
+        </div>
+        
+        <!-- Dashboard section (hidden until logged in) -->
+        <div id="dashboard-section" style="display: none;">
+            <h2>Dashboard</h2>
+            <p id="welcome-message"></p>
+            
+            <!-- Section for creating a new class -->
+            <div id="create-class-section">
+                <h3>Create Class</h3>
+                <!-- Input for class name -->
+                <input type="text" id="class-name" placeholder="Class name">
+                <!-- Button to create class -->
+                <button onclick="createClass()">Create Class</button>
+                <!-- Display generated class code -->
+                <p id="class-code-display"></p>
+            </div>
+            
+            <!-- Section for managing marking sessions -->
+            <div id="marking-section">
+                <h3>Marking Session</h3>
+                <!-- Dropdown to select class -->
+                <select id="class-select" onchange="loadEnrolledStudents()">
+                    <option value="">Select a class</option>
+                </select>
+                
+                <!-- Enrolled students display -->
+                <div id="enrolled-students" style="display: none;">
+                    <h4>Enrolled Students</h4>
+                    <ul id="enrolled-list"></ul>
+                </div>
+                
+                <!-- Button to begin marking -->
+                <button onclick="beginMarking()">Begin Marking</button>
+                
+                <!-- Button to close marking (hidden until marking starts) -->
+                <button id="close-marking-button" onclick="closeMarking()" style="display: none;">Close Marking</button>
+                
+                <!-- Attendance statistics display -->
+                <div id="attendance-stats" style="display: none;">
+                    <h4>Attendance Statistics</h4>
+                    <p>Present: <span id="present-count">0</span></p>
+                    <p>Absent: <span id="absent-count">0</span></p>
+                    <ul id="attendance-list"></ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Button to return to home -->
+        <button onclick="window.location.href='index.html'">Back to Home</button>
+    </div>
+    
+    <!-- Load shared utilities -->
+    <script src="shared.js"></script>
+    <!-- Load teacher-specific logic -->
+    <script src="teacher.js"></script>
+</body>
+</html>
