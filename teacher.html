@@ -12,21 +12,14 @@
     <div class="container">
         <h1>Teacher Dashboard</h1>
         
-        <!-- Login section (shown by default) -->
-        <div id="login-section">
-            <h2>Login</h2>
-            <!-- Input for teacher name -->
-            <input type="text" id="teacher-name" placeholder="Your name">
-            <!-- Input for teacher ID -->
-            <input type="text" id="teacher-id" placeholder="Your teacher ID">
-            <!-- Input for password -->
-            <input type="password" id="teacher-password" placeholder="Password">
-            <!-- Button to login -->
-            <button onclick="login()">Login</button>
-        </div>
+        <!-- Display logged in teacher information -->
+        <p id="teacher-info"></p>
         
-        <!-- Dashboard section (hidden until logged in) -->
-        <div id="dashboard-section" style="display: none;">
+        <!-- Logout button -->
+        <button onclick="logout()" style="margin-top: 10px;">Logout</button>
+        
+        <!-- Dashboard section (shown by default since teacher is logged in) -->
+        <div id="dashboard-section">
             <h2>Dashboard</h2>
             <p id="welcome-message"></p>
             
@@ -71,8 +64,8 @@
             </div>
         </div>
         
-        <!-- Button to return to home -->
-        <button onclick="window.location.href='index.html'">Back to Home</button>
+        <!-- Button to return to main menu -->
+        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
     </div>
     
     <!-- Load shared utilities -->

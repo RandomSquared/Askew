@@ -12,6 +12,17 @@
  * - Animations and transitions
  */
 
+:root {
+    --white: #ffffff;
+    --highlight-colour-1: #812eff;
+    --text-color-fg-1: #ffffff;
+    --highlight-colour-2: #2d54ff;
+    --text-color-fg-2: #ffffff;
+    --background-color-1: #d8d0ff;
+    --text-color-bg-1: #000000;
+
+}
+
 /* Basic container styling */
 .container {
     max-width: 800px;
@@ -22,6 +33,9 @@
 /* Button styling will be added here */
 button {
     /* Future button styling */
+    border: none;
+    padding: 3px 5px;
+    border-radius: 5px;
 }
 
 /* Input styling will be added here */

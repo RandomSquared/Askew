@@ -17,48 +17,48 @@ let currentTeacher = null; // Stores teacher name and ID
 let currentSessionId = null; // ID of the active marking session
 let attendancePollInterval = null; // Interval for polling attendance updates
 
+// Check teacher login on page load
+window.addEventListener('DOMContentLoaded', checkTeacherLogin);
+
 /**
- * Login the teacher using name, teacher ID, and password
- * Verifies credentials against the teachers table
+ * Check if teacher is logged in on page load
+ * Redirect to login page if not authenticated
+ * Display teacher information and load dashboard if logged in
  */
-async function login() {
-    const teacherName = document.getElementById('teacher-name').value.trim();
-    const teacherId = document.getElementById('teacher-id').value.trim();
-    const password = document.getElementById('teacher-password').value.trim();
+function checkTeacherLogin() {
+    const savedTeacher = localStorage.getItem('currentTeacher');
     
-    // Validate all fields are filled
-    if (!teacherName || !teacherId || !password) {
-        alert('Please fill in all fields');
+    if (!savedTeacher) {
+        // Teacher is not logged in, redirect to login page
+        alert('Please login first');
+        window.location.href = 'login.html?type=teacher-login';
         return;
     }
     
-    try {
-        // Query the database to verify teacher credentials
-        const teachers = await supabaseGet(
-            'teachers',
-            `teacher_id=eq.${teacherId}&password=eq.${password}`
-        );
-        
-        if (teachers.length === 0) {
-            alert('Invalid credentials. Please check your teacher ID and password.');
-            return;
-        }
-        
-        // Store teacher information
-        currentTeacher = teachers[0];
-        
-        // Update UI to show dashboard
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('dashboard-section').style.display = 'block';
-        document.getElementById('welcome-message').textContent = `Welcome, ${currentTeacher.name}!`;
-        
-        // Load teacher's classes
-        loadClasses();
-        
-    } catch (error) {
-        console.error('Error logging in:', error);
-        alert('Error logging in. Please try again.');
-    }
+    // Parse and store teacher information
+    currentTeacher = JSON.parse(savedTeacher);
+    
+    // Display teacher information on the page
+    document.getElementById('teacher-info').textContent = 
+        `Logged in as: ${currentTeacher.name} (${currentTeacher.teacher_id})`;
+    
+    // Display welcome message
+    document.getElementById('welcome-message').textContent = `Welcome, ${currentTeacher.name}!`;
+    
+    // Load teacher's classes
+    loadClasses();
+}
+
+/**
+ * Logout the current teacher
+ * Clear teacher data from localStorage and redirect to main menu
+ */
+function logout() {
+    // Clear teacher data from localStorage
+    localStorage.removeItem('currentTeacher');
+    
+    // Redirect to main menu
+    window.location.href = 'index.html';
 }
 
 /**

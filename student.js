@@ -20,18 +20,61 @@ let realtimeSubscription = null; // Realtime subscription for marking signals
 window.addEventListener('DOMContentLoaded', loadSavedClasses);
 
 /**
+ * Check if student is logged in on page load
+ * Redirect to login page if not authenticated
+ * Display student information if logged in
+ */
+function checkStudentLogin() {
+    const savedStudent = localStorage.getItem('currentStudent');
+    
+    if (!savedStudent) {
+        // Student is not logged in, redirect to login page
+        alert('Please login first');
+        window.location.href = 'login.html?type=student-login';
+        return false;
+    }
+    
+    // Parse and store student information
+    currentStudent = JSON.parse(savedStudent);
+    
+    // Display student information on the page
+    document.getElementById('student-info').textContent = 
+        `Logged in as: ${currentStudent.name} (${currentStudent.student_id})`;
+    
+    return true;
+}
+
+/**
+ * Logout the current student
+ * Clear student data from localStorage and redirect to main menu
+ */
+function logout() {
+    // Clear student data from localStorage
+    localStorage.removeItem('currentStudent');
+    
+    // Redirect to main menu
+    window.location.href = 'index.html';
+}
+
+// Override the loadSavedClasses to include login check
+const originalLoadSavedClasses = loadSavedClasses;
+loadSavedClasses = function() {
+    // Check login first
+    if (!checkStudentLogin()) {
+        return;
+    }
+    
+    // Call the original function if logged in
+    originalLoadSavedClasses();
+};
+
+/**
  * Load saved classes from localStorage
  * Displays list of previously joined classes
+ * Note: Student info is now loaded from login, not from this function
  */
 function loadSavedClasses() {
     const savedClasses = JSON.parse(localStorage.getItem('savedClasses') || '[]');
-    const savedStudent = JSON.parse(localStorage.getItem('savedStudent') || 'null');
-    
-    // If student info is saved, pre-fill the form
-    if (savedStudent) {
-        document.getElementById('student-name').value = savedStudent.name;
-        document.getElementById('student-id').value = savedStudent.id;
-    }
     
     // Display saved classes if any exist
     if (savedClasses.length > 0) {
@@ -61,13 +104,7 @@ function loadSavedClasses() {
  * @param {string} className - The class name
  */
 async function selectSavedClass(classId, classCode, className) {
-    const studentName = document.getElementById('student-name').value.trim();
-    const studentId = document.getElementById('student-id').value.trim();
-    
-    if (!studentName || !studentId) {
-        alert('Please enter your name and student ID');
-        return;
-    }
+    // Student info is already loaded from login, no need to get from inputs
     
     try {
         // Query the database to verify the class still exists
@@ -78,12 +115,8 @@ async function selectSavedClass(classId, classCode, className) {
             return;
         }
         
-        // Store class and student information
+        // Store class information (student info is already in currentStudent)
         currentClass = classes[0];
-        currentStudent = { name: studentName, id: studentId };
-        
-        // Save student info to localStorage
-        localStorage.setItem('savedStudent', JSON.stringify(currentStudent));
         
         // Update UI to show marking section
         document.getElementById('join-section').style.display = 'none';
@@ -116,15 +149,14 @@ function removeSavedClass(classId) {
  * Join a class using the provided class code
  * Validates the class code exists and stores student information
  * Saves the class to localStorage for future use
+ * Note: Student info is already loaded from login
  */
 async function joinClass() {
     const classCode = document.getElementById('class-code').value.trim();
-    const studentName = document.getElementById('student-name').value.trim();
-    const studentId = document.getElementById('student-id').value.trim();
     
-    // Validate all fields are filled
-    if (!classCode || !studentName || !studentId) {
-        alert('Please fill in all fields');
+    // Validate class code is filled
+    if (!classCode) {
+        alert('Please enter a class code');
         return;
     }
     
@@ -137,12 +169,8 @@ async function joinClass() {
             return;
         }
         
-        // Store class and student information
+        // Store class information (student info is already in currentStudent)
         currentClass = classes[0];
-        currentStudent = { name: studentName, id: studentId };
-        
-        // Save student info to localStorage
-        localStorage.setItem('savedStudent', JSON.stringify(currentStudent));
         
         // Save class to localStorage if not already saved
         let savedClasses = JSON.parse(localStorage.getItem('savedClasses') || '[]');
@@ -230,9 +258,7 @@ async function pollForMarkingSession() {
  * 1. Gets teacher's location from database
  * 2. Gets student's current location
  * 3. Calculates distance between them
- * 4. If within 100m, marks as present
- * 5. If outside 100m, shows error and allows retry
- * Privacy: Student location is never stored in database
+ * 4. If within 100m, marks as present, otherwise, error
  */
 async function markAttendance() {
     const statusMessage = document.getElementById('status-message');
@@ -258,8 +284,7 @@ async function markAttendance() {
             return;
         }
         
-        // Get student's current location
-        // Privacy: This location is only used for calculation, never stored
+        // Get student's current location (not stored)
         const studentLocation = await getCurrentLocation();
         
         // Calculate distance between student and teacher

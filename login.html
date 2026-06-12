@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Attendance System</title>
+    <!-- Link to external CSS file for styling -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main container for login page -->
+    <div class="container">
+        <h1>Welcome to Askew</h1>
+        
+        <!-- Tab buttons to switch between login types -->
+        <div class="tab-buttons">
+            <button id="tab-student-login" onclick="showTab('student-login')">Student Login</button>
+            <button id="tab-student-signup" onclick="showTab('student-signup')">Student Sign Up</button>
+            <button id="tab-teacher-login" onclick="showTab('teacher-login')">Teacher Login</button>
+        </div>
+        
+        <!-- Student Login Section -->
+        <div id="student-login-section" class="login-section" style="display: none;">
+            <h2>Student Login</h2>
+            <!-- Input for student name -->
+            <input type="text" id="student-login-name" placeholder="Your name">
+            <!-- Input for student ID -->
+            <input type="text" id="student-login-id" placeholder="Your student ID">
+            <!-- Input for email (placeholder for future email verification) -->
+            <input type="email" id="student-login-email" placeholder="Email (optional for now)">
+            <!-- Button to login as student -->
+            <button onclick="studentLogin()">Login as Student</button>
+        </div>
+        
+        <!-- Student Sign Up Section -->
+        <div id="student-signup-section" class="login-section" style="display: none;">
+            <h2>Student Sign Up</h2>
+            <!-- Input for student name -->
+            <input type="text" id="student-signup-name" placeholder="Your name">
+            <!-- Input for student ID -->
+            <input type="text" id="student-signup-id" placeholder="Your student ID">
+            <!-- Input for email (placeholder for future email verification) -->
+            <input type="email" id="student-signup-email" placeholder="Email (optional for now)">
+            <!-- Button to sign up as student -->
+            <button onclick="studentSignup()">Sign Up as Student</button>
+        </div>
+        
+        <!-- Teacher Login Section -->
+        <div id="teacher-login-section" class="login-section" style="display: none;">
+            <h2>Teacher Login</h2>
+            <!-- Input for teacher name -->
+            <input type="text" id="teacher-login-name" placeholder="Your name">
+            <!-- Input for teacher ID -->
+            <input type="text" id="teacher-login-id" placeholder="Your teacher ID">
+            <!-- Input for password -->
+            <input type="password" id="teacher-login-password" placeholder="Password">
+            <!-- Button to login as teacher -->
+            <button onclick="teacherLogin()">Login as Teacher</button>
+        </div>
+        
+        <!-- Status message display -->
+        <p id="login-status"></p>
+        
+        <!-- Button to return to main menu -->
+        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
+    </div>
+    
+    <!-- Load shared utilities -->
+    <script src="shared.js"></script>
+    <!-- Load login logic -->
+    <script src="login.js"></script>
+</body>
+</html>

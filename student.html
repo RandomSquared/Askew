@@ -12,15 +12,17 @@
     <div class="container">
         <h1>Student Attendance</h1>
         
+        <!-- Display logged in student information -->
+        <p id="student-info"></p>
+        
+        <!-- Logout button -->
+        <button onclick="logout()" style="margin-top: 10px;">Logout</button>
+        
         <!-- Section for joining a class -->
         <div id="join-section">
             <h2>Join Class</h2>
             <!-- Input for class code -->
             <input type="text" id="class-code" placeholder="Enter class code">
-            <!-- Input for student name -->
-            <input type="text" id="student-name" placeholder="Your name">
-            <!-- Input for student ID -->
-            <input type="text" id="student-id" placeholder="Your student ID">
             <!-- Button to join the class -->
             <button onclick="joinClass()">Join Class</button>
         </div>
@@ -37,8 +39,8 @@
             <p id="status-message"></p>
         </div>
         
-        <!-- Button to return to home -->
-        <button onclick="window.location.href='index.html'">Back to Home</button>
+        <!-- Button to return to main menu -->
+        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
     </div>
     
     <!-- Load shared utilities -->
