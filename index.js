@@ -21,11 +21,11 @@ function initializeMainMenu() {
     // Future initialization logic can be added here
     console.log('Main menu initialized');
 
-    // Set button colors for main menu buttons
-    document.getElementById('btn-student-login').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('btn-student-signup').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('btn-teacher-login').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('btn-student-login').style.color = 'var(--text-color-bg-1)';
-    document.getElementById('btn-student-signup').style.color = 'var(--text-color-bg-1)';
-    document.getElementById('btn-teacher-login').style.color = 'var(--text-color-bg-1)';
+    // Set button colours for main menu buttons
+    document.getElementById('btn-student-login').style.backgroundColor = 'var(--background-colour-1)';
+    document.getElementById('btn-student-signup').style.backgroundColor = 'var(--background-colour-1)';
+    document.getElementById('btn-teacher-login').style.backgroundColor = 'var(--background-colour-1)';
+    document.getElementById('btn-student-login').style.color = 'var(--text-colour-bg-1)';
+    document.getElementById('btn-student-signup').style.color = 'var(--text-colour-bg-1)';
+    document.getElementById('btn-teacher-login').style.color = 'var(--text-colour-bg-1)';
 }

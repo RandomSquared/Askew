@@ -2,43 +2,355 @@
  * Attendance System - Stylesheet
  * 
  * This file contains CSS styling for the attendance system.
- * Currently a placeholder for future styling implementation.
+ * All adjustable elements are centralized in CSS variables for easy customization.
  * 
- * Future enhancements:
+ * Features:
  * - Responsive design for mobile devices
- * - Color scheme and typography
+ * - Colour scheme and typography
  * - Button and input styling
- * - Layout improvements
+ * - Layout improvements with card-based design
  * - Animations and transitions
+ * - Always use colour instead of color where applicable to improve consistancy
  */
 
+/* ========================================
+   CSS VARIABLES - Centralized Configuration
+   ======================================== */
+
 :root {
+    /* Existing colour scheme - preserved */
     --white: #ffffff;
     --highlight-colour-1: #812eff;
-    --text-color-fg-1: #ffffff;
+    --text-colour-fg-1: #ffffff;
     --highlight-colour-2: #2d54ff;
-    --text-color-fg-2: #ffffff;
-    --background-color-1: #d8d0ff;
-    --text-color-bg-1: #000000;
+    --text-colour-fg-2: #ffffff;
+    --highlight-colour-3: #ffffff;
+    --text-colour-fg-3: #000000;
+    --background-colour-1: #d8d0ff;
+    --text-colour-bg-1: #000000;
 
+    /* Typography variables */
+    --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-size-h1: 2.5rem;
+    --font-size-h2: 2rem;
+    --font-size-h3: 1.5rem;
+    --font-size-h4: 1.25rem;
+    --font-size-body: 1rem;
+    --font-size-small: 0.875rem;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --line-height-tight: 1.2;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+
+    /* Spacing scale */
+    --spacing-1: 4px;
+    --spacing-2: 8px;
+    --spacing-2-1: 12px;
+    --spacing-3: 16px;
+    --spacing-4: 24px;
+    --spacing-5: 32px;
+    --spacing-6: 48px;
+
+    /* Border variables */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --border-width: 1px;
+    --border-colour: rgba(0, 0, 0, 0.1);
+
+    /* Shadow variables for depth */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+    /* Transition variables */
+    --transition-duration: 200ms;
+    --transition-timing: ease-in-out;
+
+    /* Layout variables */
+    --container-max-width: 800px;
+    --section-padding: var(--spacing-4);
+    --card-padding: var(--spacing-2-1);
 }
 
-/* Basic container styling */
+/* ========================================
+   BASE STYLES & TYPOGRAPHY
+   ======================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--text-color-bg-1);
+    background-color: var(--background-colour-1);
+    margin: 0;
+    padding: var(--spacing-3);
+}
+
+h1 {
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--spacing-4);
+    text-align: center;
+}
+
+h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--spacing-3);
+    text-align: center;
+}
+
+h3 {
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--spacing-2);
+}
+
+h4 {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--spacing-2);
+}
+
+p {
+    margin-bottom: var(--spacing-2);
+}
+
+/* ========================================
+   LAYOUT & CONTAINER
+   ======================================== */
+
 .container {
-    max-width: 800px;
+    max-width: var(--container-max-width);
     margin: 0 auto;
-    padding: 20px;
+    padding: var(--spacing-4);
 }
 
-/* Button styling will be added here */
+/* Card-based design for sections */
+.card {
+    background-color: var(--highlight-colour-3);
+    border: var(--border-width) solid var(--border-colour);
+    border-radius: var(--border-radius-lg);
+    padding: var(--card-padding);
+    margin-bottom: var(--spacing-4);
+    box-shadow: var(--shadow-md);
+}
+
+.button-row {
+    display: flex;
+    gap: var(--spacing-2);
+    justify-content: space-between;
+}
+
+.button-row button {
+    flex: 1;
+    width: auto;
+}
+
+
+
+/* Section spacing */
+section {
+    margin-bottom: var(--spacing-5);
+}
+
+/* ========================================
+   BUTTON STYLING
+   ======================================== */
+
 button {
-    /* Future button styling */
     border: none;
-    padding: 3px 5px;
-    border-radius: 5px;
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-duration) var(--transition-timing);
+    background-color: var(--highlight-colour-1);
+    color: var(--text-colour-fg-1);
+    margin: var(--spacing-1) 0px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-/* Input styling will be added here */
-input, select {
-    /* Future input styling */
+
+
+button:hover {
+    background-color: var(--highlight-colour-2);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+button:focus {
+    outline: 2px solid var(--highlight-colour-1);
+    outline-offset: 2px;
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Secondary button style */
+button.secondary {
+    background-color: var(--highlight-colour-3);
+    color: var(--text-colour-bg-1);
+    border: var(--border-width) solid var(--border-colour);
+}
+
+button.secondary:hover {
+    background-color: var(--background-colour-1);
+}
+
+/* ========================================
+   INPUT & SELECT STYLING
+   ======================================== */
+
+input,
+select {
+    width: 100%;
+    padding: var(--spacing-2) var(--spacing-3);
+    border: var(--border-width) solid var(--border-colour);
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    margin-bottom: var(--spacing-2);
+    transition: border-color var(--transition-duration) var(--transition-timing);
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--highlight-colour-1);
+    box-shadow: 0 0 0 3px rgba(129, 46, 255, 0.1);
+}
+
+/* ========================================
+   TAB NAVIGATION STYLING
+   ======================================== */
+
+.tab-buttons {
+    display: flex;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-4);
+    flex-wrap: wrap;
+}
+
+.tab-buttons button {
+    flex: 1;
+    min-width: 120px;
+    background-color: var(--white);
+    color: var(--text-colour-bg-1);
+    border: var(--border-width) solid var(--border-colour);
+}
+
+.tab-buttons button.active {
+    background-color: var(--highlight-colour-1);
+    color: var(--text-colour-fg-1); 
+    border-color: var(--highlight-colour-1);
+}
+
+.tab-buttons button:hover {
+    background-color: var(--highlight-colour-2);
+    color: var(--text-colour-fg-2);
+}
+
+/* ========================================
+   LOGIN SECTION STYLING
+   ======================================== */
+
+.login-section {
+    display: none;
+}
+
+.login-section.active {
+    display: block;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+.text-center {
+    text-align: center;
+}
+
+.mt-2 {
+    margin-top: var(--spacing-2);
+}
+
+.mt-4 {
+    margin-top: var(--spacing-4);
+}
+
+.mb-2 {
+    margin-bottom: var(--spacing-2);
+}
+
+.mb-4 {
+    margin-bottom: var(--spacing-4);
+}
+
+/* ========================================
+   MOBILE RESPONSIVENESS
+   ======================================== */
+
+@media (max-width: 768px) {
+    body {
+        padding: var(--spacing-2);
+    }
+
+    .container {
+        padding: var(--spacing-2);
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    /* Stack buttons vertically on mobile */
+    .container > button,
+    .tab-buttons {
+        flex-direction: column;
+    }
+
+    .tab-buttons button {
+        width: 100%;
+        min-width: auto;
+    }
+
+    /* Ensure touch targets are at least 44px */
+    button,
+    input,
+    select {
+        min-height: 44px;
+    }
+
+    /* Adjust card padding for mobile */
+    .card {
+        padding: var(--spacing-3);
+    }
 }
