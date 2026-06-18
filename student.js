@@ -149,10 +149,8 @@ function loadSavedClasses() {
             classDiv.style.margin = '10px 0';
             classDiv.innerHTML = `
                 <strong>${cls.class_name}</strong> (Code: ${cls.class_code})
-                <div class="button-row">
-                    <button onclick="selectSavedClass('${cls.id}', '${cls.class_code}', '${cls.class_name}')">Select</button>
-                    <button onclick="removeSavedClass('${cls.id}')">Remove</button>
-                </div>
+                <button onclick="selectSavedClass('${cls.id}', '${cls.class_code}', '${cls.class_name}')">Select</button>
+                <button onclick="removeSavedClass('${cls.id}')">Remove</button>
             `;
             savedClassesDiv.appendChild(classDiv);
         });

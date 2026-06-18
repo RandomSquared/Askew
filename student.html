@@ -23,10 +23,10 @@
         </div>
         
         <!-- Logout button -->
-        <button class="secondary" onclick="logout()">Logout</button>
+        <button onclick="logout()" style="margin-top: 10px;">Logout</button>
         
         <!-- Section for joining a class -->
-        <div id="join-section" class="card">
+        <div id="join-section">
             <h2>Join Class</h2>
             <!-- Input for class code -->
             <input type="text" id="class-code" placeholder="Enter class code">
@@ -35,7 +35,7 @@
         </div>
         
         <!-- Section for marking attendance (hidden by default) -->
-        <div id="marking-section" class="card" style="display: none;">
+        <div id="marking-section" style="display: none;">
             <h2>Waiting for teacher to start marking...</h2>
             <p id="class-info"></p>
             
@@ -47,7 +47,7 @@
         </div>
         
         <!-- Button to return to main menu -->
-        <button class="secondary" onclick="window.location.href='index.html'">Back to Main Menu</button>
+        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
     </div>
     
     <!-- Load shared utilities -->
