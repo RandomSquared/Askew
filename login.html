@@ -22,39 +22,49 @@
         </div>
         
         <!-- Student Login Section -->
-        <div id="student-login-section" class="login-section card" style="display: none;">
+        <div id="student-login-section" class="login-section" style="display: none;">
             <h2>Student Login</h2>
-            <input type="text" id="student-login-email" placeholder="Email or Student ID">
-            <input type="password" id="student-login-password" placeholder="Password">
+            <!-- Input for student name -->
+            <input type="text" id="student-login-name" placeholder="Your name">
+            <!-- Input for student ID -->
+            <input type="text" id="student-login-id" placeholder="Your student ID">
+            <!-- Input for email (placeholder for future email verification) -->
+            <input type="email" id="student-login-email" placeholder="Email (optional for now)">
+            <!-- Button to login as student -->
             <button onclick="studentLogin()">Login as Student</button>
         </div>
         
         <!-- Student Sign Up Section -->
-        <div id="student-signup-section" class="login-section card" style="display: none;">
+        <div id="student-signup-section" class="login-section" style="display: none;">
             <h2>Student Sign Up</h2>
+            <!-- Input for student name -->
             <input type="text" id="student-signup-name" placeholder="Your name">
-            <input type="email" id="student-signup-email" placeholder="Email">
-            <input type="password" id="student-signup-password" placeholder="Password">
-            <input type="password" id="student-signup-confirm-password" placeholder="Confirm Password">
-            <p class="password-requirements">Password must be 8+ characters with at least 1 number
-            </p>
+            <!-- Input for student ID -->
+            <input type="text" id="student-signup-id" placeholder="Your student ID">
+            <!-- Input for email (placeholder for future email verification) -->
+            <input type="email" id="student-signup-email" placeholder="Email (optional for now)">
+            <!-- Button to sign up as student -->
             <button onclick="studentSignup()">Sign Up as Student</button>
         </div>
         
         <!-- Teacher Login Section -->
-        <div id="teacher-login-section" class="login-section card" style="display: none;">
+        <div id="teacher-login-section" class="login-section" style="display: none;">
             <h2>Teacher Login</h2>
+            <!-- Input for teacher name -->
             <input type="text" id="teacher-login-name" placeholder="Your name">
+            <!-- Input for teacher ID -->
             <input type="text" id="teacher-login-id" placeholder="Your teacher ID">
+            <!-- Input for password -->
             <input type="password" id="teacher-login-password" placeholder="Password">
+            <!-- Button to login as teacher -->
             <button onclick="teacherLogin()">Login as Teacher</button>
         </div>
         
         <!-- Status message display -->
-        <h4 id="login-status"></h4>
+        <p id="login-status"></p>
         
         <!-- Button to return to main menu -->
-        <button class="secondary" onclick="window.location.href='index.html'">Back to Main Menu</button>
+        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
     </div>
     
     <!-- Load shared utilities -->
