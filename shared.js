@@ -13,7 +13,7 @@
 // Supabase configuration
 const SUPABASE_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co';
 const SUPABASE_REST_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/';
-const SUPABASE_KEY = 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqenZ1aWx5anVoeGN5dWdqYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTM3NzYsImV4cCI6MjA5NDAyOTc3Nn0.QJJ-re0UGlmCiIH1fOgUSbWXCLi0IkvIbAUNDysEEF8';
 
 // Initialize Supabase Auth client (will be initialized after library loads)
 let supabase = null;
@@ -87,16 +87,24 @@ function initializeSupabaseAuth() {
  * Generic function to make GET requests to Supabase
  * @param {string} table - The table name to query
  * @param {string} filters - Optional filters for the query (e.g., 'class_code=eq.ABC123')
+ * @param {string} authToken - Optional auth token for authenticated requests
  * @returns {Promise<Array>} - Array of results from the query
  */
-async function supabaseGet(table, filters = '') {
+async function supabaseGet(table, filters = '', authToken = null) {
     const url = `${SUPABASE_REST_URL}${table}?${filters}`;
+    const headers = {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json'
+    };
+    
+    // Add auth token if provided
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
     const response = await fetch(url, {
         method: 'GET',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Content-Type': 'application/json'
-        }
+        headers: headers
     });
     
     if (!response.ok) {
@@ -110,17 +118,25 @@ async function supabaseGet(table, filters = '') {
  * Generic function to make POST requests to Supabase
  * @param {string} table - The table name to insert into
  * @param {Object} data - The data to insert
+ * @param {string} authToken - Optional auth token for authenticated requests
  * @returns {Promise<Object>} - The inserted record
  */
-async function supabasePost(table, data) {
+async function supabasePost(table, data, authToken = null) {
     const url = `${SUPABASE_REST_URL}${table}`;
+    const headers = {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+    
+    // Add auth token if provided
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
     const response = await fetch(url, {
         method: 'POST',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-        },
+        headers: headers,
         body: JSON.stringify(data)
     });
     
@@ -136,17 +152,25 @@ async function supabasePost(table, data) {
  * @param {string} table - The table name to update
  * @param {string} filters - Filters to identify which records to update
  * @param {Object} data - The data to update
+ * @param {string} authToken - Optional auth token for authenticated requests
  * @returns {Promise<Object>} - The updated record(s)
  */
-async function supabasePatch(table, filters, data) {
+async function supabasePatch(table, filters, data, authToken = null) {
     const url = `${SUPABASE_REST_URL}${table}?${filters}`;
+    const headers = {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+    
+    // Add auth token if provided
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
     const response = await fetch(url, {
         method: 'PATCH',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-        },
+        headers: headers,
         body: JSON.stringify(data)
     });
     

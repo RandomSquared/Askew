@@ -14,7 +14,7 @@
 
 // Supabase configuration
 const SUPABASE_REST_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/';
-const SUPABASE_KEY = 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqenZ1aWx5anVoeGN5dWdqYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTM3NzYsImV4cCI6MjA5NDAyOTc3Nn0.QJJ-re0UGlmCiIH1fOgUSbWXCLi0IkvIbAUNDysEEF8';
 
 // Database helper functions defined locally to avoid scope issues
 async function supabaseGet(table, filters = '') {
@@ -34,15 +34,22 @@ async function supabaseGet(table, filters = '') {
     return await response.json();
 }
 
-async function supabasePost(table, data) {
+async function supabasePost(table, data, authToken = null) {
     const url = `${SUPABASE_REST_URL}${table}`;
+    const headers = {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+    
+    // Add auth token if provided
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
     const response = await fetch(url, {
         method: 'POST',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-        },
+        headers: headers,
         body: JSON.stringify(data)
     });
     
@@ -53,15 +60,22 @@ async function supabasePost(table, data) {
     return await response.json();
 }
 
-async function supabasePatch(table, filters, data) {
+async function supabasePatch(table, filters, data, authToken = null) {
     const url = `${SUPABASE_REST_URL}${table}?${filters}`;
+    const headers = {
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+    
+    // Add auth token if provided
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
     const response = await fetch(url, {
         method: 'PATCH',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-        },
+        headers: headers,
         body: JSON.stringify(data)
     });
     
@@ -79,7 +93,6 @@ let currentTab = null; // Currently active login tab
 window.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded fired');
     initializeLoginPage();
-    initializeSupabaseAuth();
 });
 
 /**
@@ -194,7 +207,7 @@ async function studentLogin() {
         const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/auth/v1/token?grant_type=password', {
             method: 'POST',
             headers: {
-                'apikey': 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N',
+                'apikey': SUPABASE_KEY,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ email: email, password: password })
@@ -224,13 +237,18 @@ async function studentLogin() {
             return;
         }
         
-        // Fetch student data from students table
-        const students = await supabaseGet(
-            'students',
-            `user_id=eq.${authData.user.id}`
-        );
+        // Fetch student data using RPC function
+        const rpcResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_student_by_user_id', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_user_id: authData.user.id })
+        });
+        const students = await rpcResponse.json();
         
-        if (students.length === 0) {
+        if (!Array.isArray(students) || students.length === 0) {
             showStatus('Student record not found. Please sign up first.');
             return;
         }
@@ -271,10 +289,6 @@ function validatePassword(password) {
     
     if (!/\d/.test(password)) {
         return { valid: false, message: 'Password must contain at least 1 number' };
-    }
-    
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-        return { valid: false, message: 'Password must contain at least 1 special character' };
     }
     
     return { valid: true, message: '' };
@@ -326,7 +340,7 @@ async function studentSignup() {
         const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/auth/v1/signup', {
             method: 'POST',
             headers: {
-                'apikey': 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N',
+                'apikey': SUPABASE_KEY,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ 
@@ -345,7 +359,10 @@ async function studentSignup() {
         // Handle different response structures from Supabase REST API
         // REST API returns user data directly, not nested under 'user'
         const user = data.user || data;
+        
+        // For signup, check if a session/access_token is returned
         const session = data.session || null;
+        const accessToken = data.access_token || session?.access_token || null;
         
         const authResult = { data: { user: user, session: session }, error: null };
         const { data: authData, error } = authResult;
@@ -362,26 +379,29 @@ async function studentSignup() {
         
         console.log('Supabase Auth successful, user ID:', authData.user.id);
         
-        // Create student record in students table with auto-generated student ID
-        console.log('Creating student record...');
-        const newStudent = await supabasePost('students', {
-            name: name,
-            user_id: authData.user.id,
-            student_id: '', // Will be updated by database trigger
-            email_verified: false
-        });
-        
-        console.log('Student record created:', newStudent);
-        
-        // Update the student record with the auto-generated student ID
+        // Create student record using RPC function
         const studentId = generateStudentId();
-        console.log('Generated student ID:', studentId);
-        
-        await supabasePatch('students', `id=eq.${newStudent[0].id}`, {
-            student_id: studentId
+        const rpcResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/create_student_record', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                p_name: name,
+                p_user_id: authData.user.id,
+                p_student_id: studentId,
+                p_email_verified: false
+            })
         });
         
-        console.log('Student ID updated successfully');
+        if (!rpcResponse.ok) {
+            const errorData = await rpcResponse.json();
+            throw new Error(errorData.message || 'Failed to create student record');
+        }
+        
+        const newStudent = await rpcResponse.json();
+        console.log('Student record created:', newStudent);
         
         showStatus('Sign up successful! Please check your email for verification link.');
         
@@ -406,7 +426,7 @@ function generateStudentId() {
 
 /**
  * Handle teacher login
- * Verifies teacher credentials against the teachers table using bcrypt password hashing
+ * Uses RPC function to verify credentials
  * Stores teacher data in localStorage on success
  * Redirects to teacher interface
  */
@@ -422,71 +442,116 @@ async function teacherLogin() {
     }
     
     try {
-        // Query the database to get teacher record
-        const teachers = await supabaseGet(
-            'teachers',
-            `teacher_id=eq.${teacherId}`
-        );
+        // Use RPC function
+        console.log('Attempting teacher login for ID:', teacherId);
+        const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_teacher_by_id', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_teacher_id: teacherId })
+        });
         
-        if (teachers.length === 0) {
+        const teachers = await response.json();
+        console.log('Teacher fetch response:', teachers);
+        
+        if (!Array.isArray(teachers) || teachers.length === 0) {
+            console.error('No teacher found with ID:', teacherId);
             showStatus('Invalid credentials. Please check your teacher ID and password.');
             return;
         }
         
         const teacher = teachers[0];
+        console.log('Teacher found:', { name: teacher.name, teacher_id: teacher.teacher_id, has_password_hash: !!teacher.password_hash, has_password: !!teacher.password });
         
         // Verify name matches
         if (teacher.name.toLowerCase() !== name.toLowerCase()) {
+            console.error('Name mismatch. Expected:', teacher.name, 'Got:', name);
             showStatus('Name does not match our records.');
             return;
         }
         
-        // Check if password_hash exists (new system) or use plain text (legacy)
+        // Verify password
         if (teacher.password_hash) {
-            // Use bcrypt to verify password hash via REST API
-            const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/verify_password', {
+            console.log('Verifying hashed password for teacher:', teacherId);
+            const verifyResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/verify_password_hash', {
                 method: 'POST',
                 headers: {
-                    'apikey': 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N',
+                    'apikey': SUPABASE_KEY,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    password_hash: teacher.password_hash,
-                    password: password
+                    p_password_hash: teacher.password_hash,
+                    p_password: password
                 })
             });
-            const data = await response.json();
             
-            if (response.status !== 200 || !data) {
+            if (!verifyResponse.ok) {
+                console.error('Verify response error:', verifyResponse.status, verifyResponse.statusText);
+                showStatus('Invalid credentials. Please check your teacher ID and password.');
+                return;
+            }
+            
+            // Handle the response - Supabase RPC returns scalar as raw value
+            let isValid = false;
+            try {
+                const responseData = await verifyResponse.json();
+                console.log('Verify response data:', responseData, 'type:', typeof responseData);
+                // Handle different response formats
+                if (typeof responseData === 'boolean') {
+                    isValid = responseData;
+                } else if (Array.isArray(responseData) && responseData.length > 0) {
+                    isValid = responseData[0] === true;
+                } else if (responseData && responseData.error) {
+                    console.error('RPC error:', responseData.error);
+                    isValid = false;
+                }
+            } catch (e) {
+                console.error('Error parsing verify response:', e);
+                isValid = false;
+            }
+            
+            console.log('Password verification result:', isValid);
+            if (!isValid) {
                 showStatus('Invalid credentials. Please check your teacher ID and password.');
                 return;
             }
         } else if (teacher.password) {
             // Legacy: check plain text password (should be migrated)
+            console.log('Checking legacy plain text password');
             if (teacher.password !== password) {
+                console.error('Password mismatch. Expected:', teacher.password, 'Got:', password);
                 showStatus('Invalid credentials. Please check your teacher ID and password.');
                 return;
             }
             
-            // Migrate to hashed password via REST API
+            console.log('Plain text password matched, migrating to hashed password');
+            // Migrate to hashed password
             const hashResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/hash_password', {
                 method: 'POST',
                 headers: {
-                    'apikey': 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N',
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ p_password: password })
+            });
+            const hashedPassword = await hashResponse.json();
+            console.log('Hashed password generated');
+            
+            // Update teacher record with hashed password
+            await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/update_teacher_password_hash', {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    password: password
+                    p_teacher_id: teacher.id,
+                    p_password_hash: hashedPassword
                 })
             });
-            const hashData = await hashResponse.json();
-            
-            if (hashResponse.status === 200 && hashData) {
-                // Update the teacher record with hashed password
-                await supabasePatch('teachers', `id=eq.${teacher.id}`, {
-                    password_hash: hashData
-                });
-            }
+            console.log('Password migration complete');
         } else {
             showStatus('Invalid credentials. Please check your teacher ID and password.');
             return;

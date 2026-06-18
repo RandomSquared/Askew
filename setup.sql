@@ -57,7 +57,6 @@ CREATE TABLE enrollments (
 ALTER PUBLICATION supabase_realtime ADD TABLE marking_sessions;
 ALTER PUBLICATION supabase_realtime ADD TABLE attendance_records;
 
--- Disable RLS for MVP simplicity (enable with policies for production)
 ALTER TABLE teachers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE classes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE marking_sessions DISABLE ROW LEVEL SECURITY;

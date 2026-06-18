@@ -12,6 +12,9 @@
  * Dependencies: shared.js (for API helpers and location calculation)
  */
 
+// Supabase configuration
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqenZ1aWx5anVoeGN5dWdqYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTM3NzYsImV4cCI6MjA5NDAyOTc3Nn0.QJJ-re0UGlmCiIH1fOgUSbWXCLi0IkvIbAUNDysEEF8';
+
 // Global variables to store teacher and session information
 let currentTeacher = null; // Stores teacher name and ID
 let currentSessionId = null; // ID of the active marking session
@@ -26,27 +29,44 @@ window.addEventListener('DOMContentLoaded', checkTeacherLogin);
  * Display teacher information and load dashboard if logged in
  */
 function checkTeacherLogin() {
+    console.log('Checking teacher login...');
+    
     const savedTeacher = localStorage.getItem('currentTeacher');
+    console.log('Saved teacher from localStorage:', savedTeacher);
     
     if (!savedTeacher) {
         // Teacher is not logged in, redirect to login page
+        console.error('No teacher found in localStorage');
         alert('Please login first');
         window.location.href = 'login.html?type=teacher-login';
         return;
     }
     
-    // Parse and store teacher information
-    currentTeacher = JSON.parse(savedTeacher);
-    
-    // Display teacher information on the page
-    document.getElementById('teacher-info').textContent = 
-        `Logged in as: ${currentTeacher.name} (${currentTeacher.teacher_id})`;
-    
-    // Display welcome message
-    document.getElementById('welcome-message').textContent = `Welcome, ${currentTeacher.name}!`;
-    
-    // Load teacher's classes
-    loadClasses();
+    try {
+        // Parse and store teacher information
+        currentTeacher = JSON.parse(savedTeacher);
+        console.log('Parsed teacher data:', currentTeacher);
+        
+        // Display teacher information on the page
+        const teacherInfo = document.getElementById('teacher-info');
+        if (teacherInfo) {
+            teacherInfo.textContent = `Logged in as: ${currentTeacher.name} (${currentTeacher.teacher_id})`;
+        }
+        
+        // Display welcome message
+        const welcomeMessage = document.getElementById('welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.textContent = `Welcome, ${currentTeacher.name}!`;
+        }
+        
+        // Load teacher's classes
+        loadClasses();
+    } catch (error) {
+        console.error('Error parsing teacher data:', error);
+        alert('Error loading teacher data. Please login again.');
+        localStorage.removeItem('currentTeacher');
+        window.location.href = 'login.html?type=teacher-login';
+    }
 }
 
 /**
@@ -66,27 +86,66 @@ function logout() {
  * Populates the class selection dropdown
  */
 async function loadClasses() {
+    console.log('Loading classes for teacher:', currentTeacher);
+    
+    if (!currentTeacher || !currentTeacher.teacher_id) {
+        console.error('No teacher or teacher_id found');
+        return;
+    }
+    
     try {
-        // Query for classes belonging to this teacher
-        const classes = await supabaseGet(
-            'classes',
-            `teacher_id=eq.${currentTeacher.teacher_id}`
-        );
+        // Use direct REST API to get teacher's classes
+        const url = `https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/classes?teacher_id=eq.${currentTeacher.teacher_id}`;
+        console.log('Fetching classes from:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const classes = await response.json();
+        console.log('Classes loaded:', classes);
         
         // Clear existing options
         const classSelect = document.getElementById('class-select');
+        if (!classSelect) {
+            console.error('class-select element not found');
+            return;
+        }
         classSelect.innerHTML = '<option value="">Select a class</option>';
         
         // Add each class to the dropdown
-        classes.forEach(cls => {
-            const option = document.createElement('option');
-            option.value = cls.id;
-            option.textContent = `${cls.class_name} (${cls.class_code})`;
-            classSelect.appendChild(option);
-        });
+        if (Array.isArray(classes)) {
+            if (classes.length === 0) {
+                console.log('No classes found for teacher');
+                const option = document.createElement('option');
+                option.textContent = 'No classes found';
+                option.disabled = true;
+                classSelect.appendChild(option);
+            } else {
+                classes.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls.id;
+                    option.textContent = `${cls.class_name} (${cls.class_code})`;
+                    classSelect.appendChild(option);
+                });
+            }
+        } else {
+            console.error('Classes response is not an array:', classes);
+        }
         
     } catch (error) {
         console.error('Error loading classes:', error);
+        alert('Error loading classes: ' + error.message);
     }
 }
 
@@ -103,17 +162,22 @@ async function loadEnrolledStudents() {
     }
     
     try {
-        // Query for enrolled students in this class
-        const enrollments = await supabaseGet(
-            'enrollments',
-            `class_id=eq.${classId}`
-        );
+        // Use direct REST API to get class enrollments
+        const response = await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/enrollments?class_id=eq.${classId}`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const enrollments = await response.json();
         
         // Update UI with enrolled students
         const enrolledList = document.getElementById('enrolled-list');
         enrolledList.innerHTML = '';
         
-        if (enrollments.length === 0) {
+        if (!Array.isArray(enrollments) || enrollments.length === 0) {
             enrolledList.innerHTML = '<li>No students enrolled yet</li>';
         } else {
             enrollments.forEach(enrollment => {
@@ -135,6 +199,8 @@ async function loadEnrolledStudents() {
  * Stores the class in the database and displays the code to the teacher
  */
 async function createClass() {
+    console.log('Creating class...');
+    
     const className = document.getElementById('class-name').value.trim();
     
     // Validate class name is provided
@@ -143,28 +209,85 @@ async function createClass() {
         return;
     }
     
+    if (!currentTeacher || !currentTeacher.teacher_id) {
+        console.error('No teacher or teacher_id found');
+        alert('Teacher not logged in properly');
+        return;
+    }
+    
     try {
         // Generate a random 6-character class code
-        const classCode = generateRandomCode();
+        let classCode = generateRandomCode();
+        console.log('Generated class code:', classCode);
+        
+        let attempts = 0;
+        const maxAttempts = 5;
         
         // Check if the code already exists (unlikely but possible)
-        const existingClasses = await supabaseGet('classes', `class_code=eq.${classCode}`);
-        if (existingClasses.length > 0) {
-            // Regenerate if collision occurs
-            return createClass();
+        while (attempts < maxAttempts) {
+            const checkUrl = `https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/classes?class_code=eq.${classCode}`;
+            console.log('Checking if code exists:', checkUrl);
+            
+            const response = await fetch(checkUrl, {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const existingClasses = await response.json();
+            console.log('Existing classes with this code:', existingClasses);
+            
+            if (!Array.isArray(existingClasses) || existingClasses.length === 0) {
+                // Code doesn't exist, use it
+                console.log('Code is available:', classCode);
+                break;
+            }
+            
+            // Code exists, generate a new one
+            classCode = generateRandomCode();
+            attempts++;
         }
         
-        // Insert the new class into the database
-        const newClass = await supabasePost('classes', {
+        // Create the class using direct REST API
+        const createUrl = 'https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/classes';
+        console.log('Creating class at:', createUrl);
+        
+        const classData = {
             class_code: classCode,
             teacher_id: currentTeacher.teacher_id,
             class_name: className,
             is_active: true
+        };
+        console.log('Class data:', classData);
+        
+        const createResponse = await fetch(createUrl, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(classData)
         });
         
+        console.log('Create response status:', createResponse.status);
+        
+        if (!createResponse.ok) {
+            const errorText = await createResponse.text();
+            console.error('Create class error:', errorText);
+            throw new Error(`Failed to create class: ${errorText}`);
+        }
+        
+        const result = await createResponse.json();
+        console.log('Class created successfully:', result);
+        
         // Display the generated class code to the teacher
-        document.getElementById('class-code-display').textContent = 
-            `Class created! Share this code with students: ${classCode}`;
+        const displayElement = document.getElementById('class-code-display');
+        if (displayElement) {
+            displayElement.textContent = `Class created! Share this code with students: ${classCode}`;
+        }
         
         // Clear the class name input
         document.getElementById('class-name').value = '';
@@ -174,7 +297,7 @@ async function createClass() {
         
     } catch (error) {
         console.error('Error creating class:', error);
-        alert('Error creating class. Please try again.');
+        alert('Error creating class: ' + error.message);
     }
 }
 
@@ -198,16 +321,30 @@ async function beginMarking() {
         // Get teacher's current location
         const teacherLocation = await getCurrentLocation();
         
-        // Create a new marking session with teacher location
-        const session = await supabasePost('marking_sessions', {
-            class_id: classId,
-            teacher_lat: teacherLocation.lat,
-            teacher_lng: teacherLocation.lng,
-            is_active: true
+        // Create a marking session using direct REST API
+        const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/marking_sessions', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+                class_id: classId,
+                teacher_lat: teacherLocation.lat,
+                teacher_lng: teacherLocation.lng,
+                is_active: true
+            })
         });
         
+        const sessions = await response.json();
+        
+        if (!Array.isArray(sessions) || sessions.length === 0) {
+            throw new Error('Failed to create marking session');
+        }
+        
         // Store the session ID
-        currentSessionId = session[0].id;
+        currentSessionId = sessions[0].id;
         
         // Update UI to show marking is active
         document.getElementById('close-marking-button').style.display = 'block';
@@ -234,11 +371,20 @@ function monitorAttendance() {
     
     const poll = async () => {
         try {
-            // Query for attendance records for this session
-            const records = await supabaseGet(
-                'attendance_records',
-                `session_id=eq.${currentSessionId}`
-            );
+            // Use direct REST API to get attendance records for this session
+            const response = await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/attendance_records?session_id=eq.${currentSessionId}`, {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const records = await response.json();
+            
+            if (!Array.isArray(records)) {
+                return;
+            }
             
             // Calculate present and absent counts
             const presentCount = records.filter(r => r.status === 'present').length;
@@ -287,41 +433,77 @@ async function closeMarking() {
             attendancePollInterval = null;
         }
         
-        // Get the class ID for this session
-        const sessions = await supabaseGet('marking_sessions', `id=eq.${currentSessionId}`);
-        const classId = sessions[0].class_id;
+        // Get all attendance records for this session using direct REST API
+        const attendanceResponse = await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/attendance_records?session_id=eq.${currentSessionId}`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
         
-        // Get all enrolled students for this class
-        const enrollments = await supabaseGet('enrollments', `class_id=eq.${classId}`);
-        const enrolledStudentIds = new Set(enrollments.map(e => e.student_id));
+        const records = await attendanceResponse.json();
+        const allRecords = Array.isArray(records) ? records : [];
         
-        // Get all attendance records for this session
-        const records = await supabaseGet('attendance_records', `session_id=eq.${currentSessionId}`);
-        const markedStudentIds = new Set(records.map(r => r.student_id));
+        // Get the class ID from the current session (from previous data or stored)
+        const classId = document.getElementById('class-select').value;
+        
+        // Get all enrolled students for this class using direct REST API
+        const enrollmentResponse = await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/enrollments?class_id=eq.${classId}`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const enrollments = await enrollmentResponse.json();
+        const enrolledStudentIds = new Set(Array.isArray(enrollments) ? enrollments.map(e => e.student_id) : []);
+        
+        const markedStudentIds = new Set(allRecords.map(r => r.student_id));
         
         // Find enrolled students who didn't mark attendance (absent)
         const absentStudentIds = [...enrolledStudentIds].filter(id => !markedStudentIds.has(id));
         
-        // Create absent records for unmarked students
+        // Create absent records for unmarked students using direct REST API
         for (const studentId of absentStudentIds) {
             const enrollment = enrollments.find(e => e.student_id === studentId);
-            await supabasePost('attendance_records', {
-                class_id: classId,
-                session_id: currentSessionId,
-                student_name: enrollment.student_name,
-                student_id: enrollment.student_id,
-                status: 'absent'
-            });
+            if (enrollment) {
+                try {
+                    await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/attendance_records', {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify({
+                            class_id: classId,
+                            session_id: currentSessionId,
+                            student_name: enrollment.student_name,
+                            student_id: enrollment.student_id,
+                            status: 'absent'
+                        })
+                    });
+                } catch (e) {
+                    console.warn('Could not create absent record for:', studentId, e);
+                }
+            }
         }
         
-        // Get all attendance records again (including newly created absent records)
-        const allRecords = await supabaseGet('attendance_records', `session_id=eq.${currentSessionId}`);
-        
-        // Wipe teacher location for privacy (set to null)
-        await supabasePatch('marking_sessions', `id=eq.${currentSessionId}`, {
-            teacher_lat: null,
-            teacher_lng: null,
-            is_active: false
+        // Close marking session by wiping teacher location for privacy using direct REST API
+        await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/marking_sessions?id=eq.${currentSessionId}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+                teacher_lat: null,
+                teacher_lng: null,
+                is_active: false
+            })
         });
         
         // Update UI
@@ -329,7 +511,7 @@ async function closeMarking() {
         
         // Display final statistics
         const presentCount = allRecords.filter(r => r.status === 'present').length;
-        const absentCount = allRecords.filter(r => r.status === 'absent').length;
+        const absentCount = absentStudentIds.length;
         
         alert(`Marking session closed!\n\nFinal Statistics:\nPresent: ${presentCount}\nAbsent: ${absentCount}`);
         

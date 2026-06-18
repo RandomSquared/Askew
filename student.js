@@ -10,9 +10,13 @@
  * Dependencies: shared.js (for API helpers and location calculation)
  */
 
+// Supabase configuration
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqenZ1aWx5anVoeGN5dWdqYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTM3NzYsImV4cCI6MjA5NDAyOTc3Nn0.QJJ-re0UGlmCiIH1fOgUSbWXCLi0IkvIbAUNDysEEF8';
+
 // Global variables to store student and class information
 let currentClass = null; // Stores the class the student has joined
 let currentStudent = null; // Stores student name and ID
+let currentAuthToken = null; // Stores the auth token for authenticated API calls
 let markingSessionId = null; // ID of the active marking session
 let realtimeSubscription = null; // Realtime subscription for marking signals
 
@@ -41,7 +45,7 @@ async function checkStudentLogin() {
     // Parse and store student information
     currentStudent = JSON.parse(savedStudent);
     
-    // Check Supabase Auth session
+    // Check Supabase Auth session and get token
     if (supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -53,14 +57,22 @@ async function checkStudentLogin() {
             return false;
         }
         
-        // Update student info with fresh data from database
+        // Store auth token for authenticated API calls
+        currentAuthToken = session.access_token;
+        
+        // Fetch fresh student data using RPC function
         try {
-            const students = await supabaseGet(
-                'students',
-                `user_id=eq.${session.user.id}`
-            );
+            const rpcResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_student_by_user_id', {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ p_user_id: session.user.id })
+            });
             
-            if (students.length > 0) {
+            const students = await rpcResponse.json();
+            if (Array.isArray(students) && students.length > 0) {
                 const student = students[0];
                 currentStudent.student_id = student.student_id;
                 currentStudent.email_verified = student.email_verified;
@@ -75,7 +87,7 @@ async function checkStudentLogin() {
     
     // Display student information on the page
     document.getElementById('student-name').textContent = currentStudent.name;
-    document.getElementById('student-id').textContent = currentStudent.student_id || 'Generating...';
+    document.getElementById('student-id').textContent = currentStudent.student_id || 'Loading...';
     document.getElementById('student-email').textContent = currentStudent.email || 'N/A';
     
     // Display email verification status
@@ -156,18 +168,25 @@ function loadSavedClasses() {
  * @param {string} className - The class name
  */
 async function selectSavedClass(classId, classCode, className) {
-    // Student info is already loaded from login, no need to get from inputs
-    
     try {
-        // Query the database to verify the class still exists
-        const classes = await supabaseGet('classes', `id=eq.${classId}`);
+        // Use RPC function to get class by ID
+        const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_class_by_code', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_class_code: classCode })
+        });
         
-        if (classes.length === 0) {
+        const classes = await response.json();
+        
+        if (!Array.isArray(classes) || classes.length === 0) {
             alert('This class no longer exists. Please remove it from your saved classes.');
             return;
         }
         
-        // Store class information (student info is already in currentStudent)
+        // Store class information
         currentClass = classes[0];
         
         // Update UI to show marking section
@@ -201,7 +220,7 @@ function removeSavedClass(classId) {
  * Join a class using the provided class code
  * Validates the class code exists and stores student information
  * Saves the class to localStorage for future use
- * Note: Student info is already loaded from login
+ * Note: Uses RPC function for class lookup
  */
 async function joinClass() {
     const classCode = document.getElementById('class-code').value.trim();
@@ -213,15 +232,24 @@ async function joinClass() {
     }
     
     try {
-        // Query the database to check if the class code exists
-        const classes = await supabaseGet('classes', `class_code=eq.${classCode}`);
+        // Use RPC function to get class by code
+        const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_class_by_code', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_class_code: classCode })
+        });
         
-        if (classes.length === 0) {
+        const classes = await response.json();
+        
+        if (!Array.isArray(classes) || classes.length === 0) {
             alert('Invalid class code. Please check and try again.');
             return;
         }
         
-        // Store class information (student info is already in currentStudent)
+        // Store class information
         currentClass = classes[0];
         
         // Save class to localStorage if not already saved
@@ -234,6 +262,24 @@ async function joinClass() {
                 class_name: currentClass.class_name
             });
             localStorage.setItem('savedClasses', JSON.stringify(savedClasses));
+        }
+        
+        // Enroll student in the class
+        try {
+            await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/enroll_student_in_class', {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    p_class_id: currentClass.id,
+                    p_student_name: currentStudent.name,
+                    p_student_id: currentStudent.student_id
+                })
+            });
+        } catch (error) {
+            console.warn('Enrollment notification:', error);
         }
         
         // Update UI to show marking section
@@ -273,13 +319,19 @@ async function pollForMarkingSession() {
     
     const poll = async () => {
         try {
-            // Query for active marking sessions for this class
-            const sessions = await supabaseGet(
-                'marking_sessions', 
-                `class_id=eq.${currentClass.id}&is_active=eq.true`
-            );
+            // Use RPC function to get active marking session
+            const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_active_marking_session', {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ p_class_id: currentClass.id })
+            });
             
-            if (sessions.length > 0) {
+            const sessions = await response.json();
+            
+            if (Array.isArray(sessions) && sessions.length > 0) {
                 // Active marking session found
                 const session = sessions[0];
                 markingSessionId = session.id;
@@ -317,13 +369,19 @@ async function markAttendance() {
     statusMessage.textContent = 'Verifying location...';
     
     try {
-        // Get teacher's location from the active marking session
-        const sessions = await supabaseGet(
-            'marking_sessions',
-            `id=eq.${markingSessionId}`
-        );
+        // Use RPC function to get active marking session
+        const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_active_marking_session', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_class_id: currentClass.id })
+        });
         
-        if (sessions.length === 0) {
+        const sessions = await response.json();
+        
+        if (!Array.isArray(sessions) || sessions.length === 0) {
             statusMessage.textContent = 'Error: Marking session not found. Please wait for teacher to start marking.';
             return;
         }
@@ -370,33 +428,27 @@ async function markAttendance() {
  * Record attendance status in the database
  * Only stores the status (present/absent), not the location
  * Also records the student as enrolled in the class
+ * Uses RPC function
  * 
  * @param {string} status - Either 'present' or 'absent'
  */
 async function recordAttendance(status) {
     try {
-        // Insert attendance record into database
-        await supabasePost('attendance_records', {
-            class_id: currentClass.id,
-            session_id: markingSessionId,
-            student_name: currentStudent.name,
-            student_id: currentStudent.id,
-            status: status
+        // Use RPC function to record attendance
+        await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/record_student_attendance', {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                p_class_id: currentClass.id,
+                p_session_id: markingSessionId,
+                p_student_name: currentStudent.name,
+                p_student_id: currentStudent.student_id,
+                p_status: status
+            })
         });
-        
-        // Record student enrollment in the class (if not already enrolled)
-        const existingEnrollments = await supabaseGet(
-            'enrollments',
-            `class_id=eq.${currentClass.id}&student_id=eq.${currentStudent.id}`
-        );
-        
-        if (existingEnrollments.length === 0) {
-            await supabasePost('enrollments', {
-                class_id: currentClass.id,
-                student_name: currentStudent.name,
-                student_id: currentStudent.id
-            });
-        }
         
         console.log(`Attendance recorded: ${status}`);
         
