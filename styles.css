@@ -2,20 +2,26 @@
  * Attendance System - Stylesheet
  * 
  * This file contains CSS styling for the attendance system.
- * Currently a placeholder for future styling implementation.
+ * All adjustable elements are centralized in CSS variables for easy customization.
  * 
- * Future enhancements:
+ * Features:
  * - Responsive design for mobile devices
- * - Color scheme and typography
+ * - Colour scheme and typography
  * - Button and input styling
- * - Layout improvements
+ * - Layout improvements with card-based design
  * - Animations and transitions
+ * - Always use colour instead of color where applicable to improve consistancy
  */
 
+/* ========================================
+   CSS VARIABLES - Centralized Configuration
+   ======================================== */
+
 :root {
+    /* Existing colour scheme - preserved */
     --white: #ffffff;
     --highlight-colour-1: #812eff;
-    --text-color-fg-1: #ffffff;
+    --text-colour-fg-1: #ffffff;
     --highlight-colour-2: #2d54ff;
     --text-colour-fg-2: #ffffff;
     --highlight-colour-3: #ffffff;
@@ -131,9 +137,9 @@ p {
    ======================================== */
 
 .container {
-    max-width: 800px;
+    max-width: var(--container-max-width);
     margin: 0 auto;
-    padding: 20px;
+    padding: var(--spacing-4);
 }
 
 /* ========================================
@@ -227,10 +233,38 @@ section {
    ======================================== */
 
 button {
-    /* Future button styling */
     border: none;
-    padding: 3px 5px;
-    border-radius: 5px;
+    padding: var(--spacing-2) var(--spacing-3);
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-duration) var(--transition-timing);
+    background-color: var(--highlight-colour-1);
+    color: var(--text-colour-fg-1);
+    margin: var(--spacing-1) 0px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+button:hover {
+    background-color: var(--highlight-colour-2);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+button:focus {
+    outline: 2px solid var(--highlight-colour-1);
+    outline-offset: 2px;
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 /* Secondary button style */

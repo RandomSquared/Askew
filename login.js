@@ -131,26 +131,26 @@ function showTab(tabName) {
     document.getElementById('teacher-login-section').style.display = 'none';
     
     // Reset all tab button styles
-    document.getElementById('tab-student-login').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('tab-student-signup').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('tab-teacher-login').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('tab-student-login').style.color = 'var(--text-color-bg-1)';
-    document.getElementById('tab-student-signup').style.color = 'var(--text-color-bg-1)';
-    document.getElementById('tab-teacher-login').style.color = 'var(--text-color-bg-1)';
+    document.getElementById('tab-student-login').style.backgroundColor = 'var(--highlight-colour-3)';
+    document.getElementById('tab-student-signup').style.backgroundColor = 'var(--highlight-colour-3)';
+    document.getElementById('tab-teacher-login').style.backgroundColor = 'var(--highlight-colour-3)';
+    document.getElementById('tab-student-login').style.color = 'var(--text-colour-bg-3)';
+    document.getElementById('tab-student-signup').style.color = 'var(--text-colour-bg-3)';
+    document.getElementById('tab-teacher-login').style.color = 'var(--text-colour-bg-3)';
     
     // Show the selected section and highlight its button
     if (tabName === 'student-login') {
         document.getElementById('student-login-section').style.display = 'block';
         document.getElementById('tab-student-login').style.backgroundColor = 'var(--highlight-colour-1)';
-        document.getElementById('tab-student-login').style.color = 'var(--text-color-fg-1)';
+        document.getElementById('tab-student-login').style.color = 'var(--text-colour-fg-1)';
     } else if (tabName === 'student-signup') {
         document.getElementById('student-signup-section').style.display = 'block';
         document.getElementById('tab-student-signup').style.backgroundColor = 'var(--highlight-colour-1)';
-        document.getElementById('tab-student-signup').style.color = 'var(--text-color-fg-1)';
+        document.getElementById('tab-student-signup').style.color = 'var(--text-colour-fg-1)';
     } else if (tabName === 'teacher-login') {
         document.getElementById('teacher-login-section').style.display = 'block';
         document.getElementById('tab-teacher-login').style.backgroundColor = 'var(--highlight-colour-1)';
-        document.getElementById('tab-teacher-login').style.color = 'var(--text-color-fg-1)';
+        document.getElementById('tab-teacher-login').style.color = 'var(--text-colour-fg-1)';
     }
     
     // Clear any status messages

@@ -16,10 +16,10 @@
         <p id="teacher-info"></p>
         
         <!-- Logout button -->
-        <button onclick="logout()" style="margin-top: 10px;">Logout</button>
+        <button class="secondary" onclick="logout()">Logout</button>
         
         <!-- Dashboard section (shown by default since teacher is logged in) -->
-        <div id="dashboard-section">
+        <div id="dashboard-section" class="card">
             <h2>Dashboard</h2>
             <p id="welcome-message"></p>
             
@@ -43,19 +43,21 @@
                 </select>
                 
                 <!-- Enrolled students display -->
-                <div id="enrolled-students" style="display: none;">
+                <div id="enrolled-students" class="card" style="display: none;">
                     <h4>Enrolled Students</h4>
                     <ul id="enrolled-list"></ul>
                 </div>
                 
-                <!-- Button to begin marking -->
-                <button onclick="beginMarking()">Begin Marking</button>
-                
-                <!-- Button to close marking (hidden until marking starts) -->
-                <button id="close-marking-button" onclick="closeMarking()" style="display: none;">Close Marking</button>
+                <div class="button-row">
+                    <!-- Button to begin marking -->
+                    <button onclick="beginMarking()">Begin Marking</button>
+                    
+                    <!-- Button to close marking (hidden until marking starts) -->
+                    <button id="close-marking-button" onclick="closeMarking()" style="display: none;">Close Marking</button>
+                </div>
                 
                 <!-- Attendance statistics display -->
-                <div id="attendance-stats" style="display: none;">
+                <div id="attendance-stats" class="card" style="display: none;">
                     <h4>Attendance Statistics</h4>
                     <p>Present: <span id="present-count">0</span></p>
                     <p>Absent: <span id="absent-count">0</span></p>
@@ -65,7 +67,7 @@
         </div>
         
         <!-- Button to return to main menu -->
-        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
+        <button class="secondary" onclick="window.location.href='index.html'">Back to Main Menu</button>
     </div>
     
     <!-- Load shared utilities -->
