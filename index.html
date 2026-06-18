@@ -8,23 +8,15 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Main container for the main menu -->
-    <div class="container">
-        <h1>Welcome to Askew</h1>
-        
-        <!-- Navigation buttons card -->
-        <div class="card">
-            <div class="button-row">
-                <!-- Button to navigate to student login -->
-                <button id="btn-student-login" onclick="window.location.href='login.html?type=student-login'">Student Login</button>
-                
-                <!-- Button to navigate to student signup -->
-                <button id="btn-student-signup" onclick="window.location.href='login.html?type=student-signup'">Student Sign Up</button>
-                
-                <!-- Button to navigate to teacher login -->
-                <button id="btn-teacher-login" onclick="window.location.href='login.html?type=teacher-login'">Teacher Login</button>
-            </div>
-        </div>
+    <!-- Fixed header with centralized Login button -->
+    <header class="header">
+        <button onclick="window.location.href='login.html?type=student-login'">Login</button>
+    </header>
+
+    <!-- Tiltable content container -->
+    <div class="tiltable-content" id="tiltable-content">
+        <!-- Centered Askew title -->
+        <h1 class="centered-title">Askew</h1>
     </div>
     
     <!-- Load main menu logic -->

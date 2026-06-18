@@ -11,8 +11,77 @@
  */
 
 // Supabase configuration
-const SUPABASE_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/';
+const SUPABASE_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co';
+const SUPABASE_REST_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/';
 const SUPABASE_KEY = 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N';
+
+// Initialize Supabase Auth client (will be initialized after library loads)
+let supabase = null;
+
+// Set up REST API fallback immediately (always available)
+const restApiAuth = {
+    auth: {
+        signUp: async ({ email, password, options }) => {
+            console.log('Using REST API for signup');
+            const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password, options: { data: options?.data } })
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+            return { data: { user: data.user, session: data.session }, error: null };
+        },
+        signInWithPassword: async ({ email, password }) => {
+            console.log('Using REST API for login');
+            const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+            return { data: { user: data.user, session: data.session }, error: null };
+        },
+        signOut: async () => {
+            localStorage.removeItem('supabase-auth-token');
+            return { error: null };
+        },
+        getSession: async () => {
+            const token = localStorage.getItem('supabase-auth-token');
+            if (!token) return { data: { session: null }, error: null };
+            return { data: { session: { access_token: token, user: { id: 'fallback' } } }, error: null };
+        }
+    }
+};
+
+function initializeSupabaseAuth() {
+    console.log('Attempting to initialize Supabase Auth client...');
+    console.log('window.supabase available:', typeof window.supabase);
+    
+    // Always use REST API fallback for reliability
+    supabase = restApiAuth;
+    console.log('Using REST API fallback for authentication');
+    
+    // Try to use CDN if available, but fallback to REST API
+    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        try {
+            const cdnClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            console.log('Supabase CDN client available, but using REST API for reliability');
+            // Keep using REST API for now
+        } catch (error) {
+            console.error('Error creating Supabase client:', error);
+        }
+    }
+    
+    console.log('Supabase client final state:', supabase ? 'available' : 'null');
+}
 
 /**
  * Generic function to make GET requests to Supabase
@@ -21,7 +90,7 @@ const SUPABASE_KEY = 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N';
  * @returns {Promise<Array>} - Array of results from the query
  */
 async function supabaseGet(table, filters = '') {
-    const url = `${SUPABASE_URL}${table}?${filters}`;
+    const url = `${SUPABASE_REST_URL}${table}?${filters}`;
     const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -44,7 +113,7 @@ async function supabaseGet(table, filters = '') {
  * @returns {Promise<Object>} - The inserted record
  */
 async function supabasePost(table, data) {
-    const url = `${SUPABASE_URL}${table}`;
+    const url = `${SUPABASE_REST_URL}${table}`;
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -70,7 +139,7 @@ async function supabasePost(table, data) {
  * @returns {Promise<Object>} - The updated record(s)
  */
 async function supabasePatch(table, filters, data) {
-    const url = `${SUPABASE_URL}${table}?${filters}`;
+    const url = `${SUPABASE_REST_URL}${table}?${filters}`;
     const response = await fetch(url, {
         method: 'PATCH',
         headers: {

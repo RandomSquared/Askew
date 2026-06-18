@@ -28,6 +28,8 @@
     --text-colour-fg-3: #000000;
     --background-colour-1: #d8d0ff;
     --text-colour-bg-1: #000000;
+    --text-colour-bg-2: #333333;
+    --text-colour-bg-3: #666666;
 
     /* Typography variables */
     --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -92,7 +94,8 @@ body {
     color: var(--text-color-bg-1);
     background-color: var(--background-colour-1);
     margin: 0;
-    padding: var(--spacing-3);
+    padding: 0;
+    overflow: hidden;
 }
 
 h1 {
@@ -137,6 +140,64 @@ p {
     max-width: var(--container-max-width);
     margin: 0 auto;
     padding: var(--spacing-4);
+}
+
+/* ========================================
+   FIXED HEADER
+   ======================================== */
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    background-color: var(--white);
+    box-shadow: var(--shadow-md);
+    z-index: 1000;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 var(--spacing-6);
+}
+
+.header button {
+    background-color: var(--highlight-colour-1);
+    color: var(--text-colour-fg-1);
+    padding: var(--spacing-2) var(--spacing-5);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-semibold);
+    width: auto;
+}
+
+/* ========================================
+   CENTERED TITLE
+   ======================================== */
+
+.centered-title {
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(3rem, 15vw, 10rem);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-colour-bg-1);
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+    user-select: none;
+    font-variant: small-caps;
+}
+
+/* ========================================
+   TILTABLE CONTENT
+   ======================================== */
+
+.tiltable-content {
+    min-height: 100vh;
+    padding-top: 70px;
+    transition: transform 0.5s ease-out;
+    will-change: transform;
 }
 
 /* Card-based design for sections */
@@ -304,6 +365,49 @@ select:focus {
 
 .mb-4 {
     margin-bottom: var(--spacing-4);
+}
+
+/* ========================================
+   STUDENT INFO CARD STYLING
+   ======================================== */
+
+.student-info-card {
+    background-color: var(--highlight-colour-2);
+    padding: var(--spacing-4);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: var(--spacing-4);
+    border: 2px solid var(--highlight-colour-1);
+    box-shadow: var(--shadow-md);
+}
+
+.student-info-card p {
+    margin: var(--spacing-2) 0;
+    font-size: var(--font-size-body);
+}
+
+.student-info-card strong {
+    color: var(--text-colour-fg-1);
+    font-weight: var(--font-weight-bold);
+}
+
+.student-id-highlight {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--highlight-colour-1);
+    background-color: var(--text-colour-fg-1);
+    padding: var(--spacing-1) var(--spacing-3);
+    border-radius: var(--border-radius-md);
+    font-family: monospace;
+    display: inline-block;
+}
+
+/* Password Requirements Styles */
+.password-requirements {
+    font-size: var(--font-size-small);
+    color: var(--text-colour-bg-2);
+    margin: var(--spacing-2) 0;
+    font-style: italic;
+    opacity: 0.8;
 }
 
 /* ========================================

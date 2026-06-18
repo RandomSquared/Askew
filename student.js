@@ -17,14 +17,18 @@ let markingSessionId = null; // ID of the active marking session
 let realtimeSubscription = null; // Realtime subscription for marking signals
 
 // Load saved classes from localStorage on page load
-window.addEventListener('DOMContentLoaded', loadSavedClasses);
+window.addEventListener('DOMContentLoaded', () => {
+    initializeSupabaseAuth();
+    loadSavedClasses();
+});
 
 /**
  * Check if student is logged in on page load
  * Redirect to login page if not authenticated
  * Display student information if logged in
+ * Check email verification status
  */
-function checkStudentLogin() {
+async function checkStudentLogin() {
     const savedStudent = localStorage.getItem('currentStudent');
     
     if (!savedStudent) {
@@ -37,18 +41,64 @@ function checkStudentLogin() {
     // Parse and store student information
     currentStudent = JSON.parse(savedStudent);
     
+    // Check Supabase Auth session
+    if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+            // Session expired, redirect to login
+            localStorage.removeItem('currentStudent');
+            alert('Session expired. Please login again.');
+            window.location.href = 'login.html?type=student-login';
+            return false;
+        }
+        
+        // Update student info with fresh data from database
+        try {
+            const students = await supabaseGet(
+                'students',
+                `user_id=eq.${session.user.id}`
+            );
+            
+            if (students.length > 0) {
+                const student = students[0];
+                currentStudent.student_id = student.student_id;
+                currentStudent.email_verified = student.email_verified;
+                
+                // Update localStorage with fresh data
+                localStorage.setItem('currentStudent', JSON.stringify(currentStudent));
+            }
+        } catch (error) {
+            console.error('Error fetching student data:', error);
+        }
+    }
+    
     // Display student information on the page
-    document.getElementById('student-info').textContent = 
-        `Logged in as: ${currentStudent.name} (${currentStudent.student_id})`;
+    document.getElementById('student-name').textContent = currentStudent.name;
+    document.getElementById('student-id').textContent = currentStudent.student_id || 'Generating...';
+    document.getElementById('student-email').textContent = currentStudent.email || 'N/A';
+    
+    // Display email verification status
+    const verificationStatus = document.getElementById('email-verification-status');
+    if (currentStudent.email_verified) {
+        verificationStatus.innerHTML = '<span style="color: green;">✓ Email verified</span>';
+    } else {
+        verificationStatus.innerHTML = '<span style="color: orange;">⚠ Email not verified. Please check your inbox.</span>';
+    }
     
     return true;
 }
 
 /**
  * Logout the current student
- * Clear student data from localStorage and redirect to main menu
+ * Clear student data from localStorage, sign out from Supabase Auth, and redirect to main menu
  */
-function logout() {
+async function logout() {
+    // Sign out from Supabase Auth
+    if (supabase) {
+        await supabase.auth.signOut();
+    }
+    
     // Clear student data from localStorage
     localStorage.removeItem('currentStudent');
     

@@ -12,11 +12,75 @@
  * Dependencies: shared.js (for API helpers)
  */
 
+// Supabase configuration
+const SUPABASE_REST_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/';
+const SUPABASE_KEY = 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N';
+
+// Database helper functions defined locally to avoid scope issues
+async function supabaseGet(table, filters = '') {
+    const url = `${SUPABASE_REST_URL}${table}?${filters}`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Content-Type': 'application/json'
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error(`GET request failed: ${response.statusText}`);
+    }
+    
+    return await response.json();
+}
+
+async function supabasePost(table, data) {
+    const url = `${SUPABASE_REST_URL}${table}`;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+        throw new Error(`POST request failed: ${response.statusText}`);
+    }
+    
+    return await response.json();
+}
+
+async function supabasePatch(table, filters, data) {
+    const url = `${SUPABASE_REST_URL}${table}?${filters}`;
+    const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+            'apikey': SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+        throw new Error(`PATCH request failed: ${response.statusText}`);
+    }
+    
+    return await response.json();
+}
+
 // Global variables to store authentication state
 let currentTab = null; // Currently active login tab
 
 // Initialize the page by checking URL parameters and showing the appropriate tab
-window.addEventListener('DOMContentLoaded', initializeLoginPage);
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded fired');
+    initializeLoginPage();
+    initializeSupabaseAuth();
+});
 
 /**
  * Initialize the login page
@@ -82,46 +146,104 @@ function showTab(tabName) {
 
 /**
  * Handle student login
- * Verifies student credentials against the students table
- * Stores student data in localStorage on success
- * Redirects to student interface
+ * Uses Supabase Auth for authentication
+ * Accepts email or student ID as login identifier
+ * Verifies email confirmation status
+ * Redirects to student interface on success
  */
 async function studentLogin() {
-    const name = document.getElementById('student-login-name').value.trim();
-    const studentId = document.getElementById('student-login-id').value.trim();
-    const email = document.getElementById('student-login-email').value.trim();
+    const emailOrId = document.getElementById('student-login-email').value.trim();
+    const password = document.getElementById('student-login-password').value.trim();
     
     // Validate required fields
-    if (!name || !studentId) {
-        showStatus('Please fill in your name and student ID');
+    if (!emailOrId || !password) {
+        showStatus('Please fill in your email/student ID and password');
         return;
     }
     
     try {
-        // Query the students table to verify credentials
+        // Check if the input is a student ID (starts with STU)
+        let email = emailOrId;
+        if (emailOrId.toUpperCase().startsWith('STU')) {
+            // Look up email by student ID
+            const students = await supabaseGet(
+                'students',
+                `student_id=eq.${emailOrId}`
+            );
+            
+            if (students.length === 0) {
+                showStatus('Student ID not found. Please sign up first.');
+                return;
+            }
+            
+            // Get the email from auth.users using the user_id
+            const student = students[0];
+            if (!student.user_id) {
+                showStatus('Account not properly set up. Please contact support.');
+                return;
+            }
+            
+            // We need to get the email from auth.users, but we can't directly access it
+            // For now, we'll ask the user to use their email instead
+            showStatus('Please use your email address to login instead of student ID.');
+            return;
+        }
+        
+        // Always use direct REST API for authentication (most reliable)
+        console.log('Using direct REST API for login');
+        const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/auth/v1/token?grant_type=password', {
+            method: 'POST',
+            headers: {
+                'apikey': 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email, password: password })
+        });
+        const data = await response.json();
+        console.log('REST API response:', data);
+        
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+        
+        // Handle different response structures from Supabase REST API
+        const user = data.user || data;
+        const session = data.session || null;
+        
+        const authResult = { data: { user: user, session: session }, error: null };
+        const { data: authData, error } = authResult;
+        
+        if (error) {
+            showStatus(error.message);
+            return;
+        }
+        
+        // Check if email is verified
+        if (!authData.user.email_confirmed_at) {
+            showStatus('Please verify your email before logging in. Check your inbox for the verification link.');
+            return;
+        }
+        
+        // Fetch student data from students table
         const students = await supabaseGet(
             'students',
-            `student_id=eq.${studentId}`
+            `user_id=eq.${authData.user.id}`
         );
         
         if (students.length === 0) {
-            showStatus('Student not found. Please sign up first.');
+            showStatus('Student record not found. Please sign up first.');
             return;
         }
         
-        // Verify the name matches (simple verification for now)
         const student = students[0];
-        if (student.name.toLowerCase() !== name.toLowerCase()) {
-            showStatus('Name does not match our records.');
-            return;
-        }
         
         // Store student data in localStorage
         localStorage.setItem('currentStudent', JSON.stringify({
             id: student.id,
             name: student.name,
             student_id: student.student_id,
-            email: student.email
+            email: authData.user.email,
+            user_id: authData.user.id
         }));
         
         showStatus('Login successful! Redirecting...');
@@ -138,69 +260,155 @@ async function studentLogin() {
 }
 
 /**
+ * Validate password meets requirements
+ * @param {string} password - Password to validate
+ * @returns {Object} - { valid: boolean, message: string }
+ */
+function validatePassword(password) {
+    if (password.length < 8) {
+        return { valid: false, message: 'Password must be at least 8 characters long' };
+    }
+    
+    if (!/\d/.test(password)) {
+        return { valid: false, message: 'Password must contain at least 1 number' };
+    }
+    
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        return { valid: false, message: 'Password must contain at least 1 special character' };
+    }
+    
+    return { valid: true, message: '' };
+}
+
+/**
  * Handle student signup
- * Creates a new student account in the students table
- * Stores student data in localStorage on success
- * Redirects to student interface
- * Note: Email verification is not implemented yet (placeholder for future)
+ * Uses Supabase Auth for authentication with email verification
+ * Creates student record in students table with auto-generated student ID
+ * Sends verification email automatically via Supabase
+ * Redirects to student interface after signup
  */
 async function studentSignup() {
     const name = document.getElementById('student-signup-name').value.trim();
-    const studentId = document.getElementById('student-signup-id').value.trim();
     const email = document.getElementById('student-signup-email').value.trim();
+    const password = document.getElementById('student-signup-password').value.trim();
+    const confirmPassword = document.getElementById('student-signup-confirm-password').value.trim();
     
     // Validate required fields
-    if (!name || !studentId) {
-        showStatus('Please fill in your name and student ID');
+    if (!name || !email || !password || !confirmPassword) {
+        showStatus('Please fill in all fields');
+        return;
+    }
+    
+    // Validate email format
+    if (!email.includes('@') || !email.includes('.')) {
+        showStatus('Please enter a valid email address');
+        return;
+    }
+    
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+        showStatus(passwordValidation.message);
+        return;
+    }
+    
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+        showStatus('Passwords do not match');
         return;
     }
     
     try {
-        // Check if student ID already exists
-        const existingStudents = await supabaseGet(
-            'students',
-            `student_id=eq.${studentId}`
-        );
+        console.log('Starting student signup for:', email);
         
-        if (existingStudents.length > 0) {
-            showStatus('This student ID is already registered. Please login instead.');
+        // Always use direct REST API for authentication (most reliable)
+        console.log('Using direct REST API for authentication');
+        const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/auth/v1/signup', {
+            method: 'POST',
+            headers: {
+                'apikey': 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                email: email, 
+                password: password,
+                options: { data: { name: name } }
+            })
+        });
+        const data = await response.json();
+        console.log('REST API response:', data);
+        
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+        
+        // Handle different response structures from Supabase REST API
+        // REST API returns user data directly, not nested under 'user'
+        const user = data.user || data;
+        const session = data.session || null;
+        
+        const authResult = { data: { user: user, session: session }, error: null };
+        const { data: authData, error } = authResult;
+        
+        if (error) {
+            console.error('Supabase Auth error:', error);
+            if (error.message.includes('already registered')) {
+                showStatus('This email is already registered. Please login instead.');
+            } else {
+                showStatus(error.message);
+            }
             return;
         }
         
-        // Create new student account
+        console.log('Supabase Auth successful, user ID:', authData.user.id);
+        
+        // Create student record in students table with auto-generated student ID
+        console.log('Creating student record...');
         const newStudent = await supabasePost('students', {
             name: name,
-            student_id: studentId,
-            email: email || null // Email is optional for now
+            user_id: authData.user.id,
+            student_id: '', // Will be updated by database trigger
+            email_verified: false
         });
         
-        // Store student data in localStorage
-        localStorage.setItem('currentStudent', JSON.stringify({
-            id: newStudent[0].id,
-            name: newStudent[0].name,
-            student_id: newStudent[0].student_id,
-            email: newStudent[0].email
-        }));
+        console.log('Student record created:', newStudent);
         
-        showStatus('Sign up successful! Redirecting...');
+        // Update the student record with the auto-generated student ID
+        const studentId = generateStudentId();
+        console.log('Generated student ID:', studentId);
         
-        // Redirect to student interface after a short delay
+        await supabasePatch('students', `id=eq.${newStudent[0].id}`, {
+            student_id: studentId
+        });
+        
+        console.log('Student ID updated successfully');
+        
+        showStatus('Sign up successful! Please check your email for verification link.');
+        
+        // Redirect to student interface after a longer delay to allow email verification
         setTimeout(() => {
             window.location.href = 'student.html';
-        }, 1000);
+        }, 3000);
         
     } catch (error) {
         console.error('Error during student signup:', error);
-        showStatus('Error signing up. Please try again.');
+        showStatus('Error signing up: ' + error.message);
     }
 }
 
 /**
+ * Generate a student ID (client-side fallback)
+ * @returns {string} - Generated student ID
+ */
+function generateStudentId() {
+    return 'STU' + Math.floor(100000 + Math.random() * 900000);
+}
+
+/**
  * Handle teacher login
- * Verifies teacher credentials against the teachers table
+ * Verifies teacher credentials against the teachers table using bcrypt password hashing
  * Stores teacher data in localStorage on success
  * Redirects to teacher interface
- * Reuses the same logic from teacher.js
  */
 async function teacherLogin() {
     const name = document.getElementById('teacher-login-name').value.trim();
@@ -214,10 +422,10 @@ async function teacherLogin() {
     }
     
     try {
-        // Query the database to verify teacher credentials
+        // Query the database to get teacher record
         const teachers = await supabaseGet(
             'teachers',
-            `teacher_id=eq.${teacherId}&password=eq.${password}`
+            `teacher_id=eq.${teacherId}`
         );
         
         if (teachers.length === 0) {
@@ -225,8 +433,66 @@ async function teacherLogin() {
             return;
         }
         
-        // Store teacher information in localStorage
         const teacher = teachers[0];
+        
+        // Verify name matches
+        if (teacher.name.toLowerCase() !== name.toLowerCase()) {
+            showStatus('Name does not match our records.');
+            return;
+        }
+        
+        // Check if password_hash exists (new system) or use plain text (legacy)
+        if (teacher.password_hash) {
+            // Use bcrypt to verify password hash via REST API
+            const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/verify_password', {
+                method: 'POST',
+                headers: {
+                    'apikey': 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    password_hash: teacher.password_hash,
+                    password: password
+                })
+            });
+            const data = await response.json();
+            
+            if (response.status !== 200 || !data) {
+                showStatus('Invalid credentials. Please check your teacher ID and password.');
+                return;
+            }
+        } else if (teacher.password) {
+            // Legacy: check plain text password (should be migrated)
+            if (teacher.password !== password) {
+                showStatus('Invalid credentials. Please check your teacher ID and password.');
+                return;
+            }
+            
+            // Migrate to hashed password via REST API
+            const hashResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/hash_password', {
+                method: 'POST',
+                headers: {
+                    'apikey': 'sb_publishable_ORuEPdmhFETjCeGmj_CS5Q_nKRsgn5N',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    password: password
+                })
+            });
+            const hashData = await hashResponse.json();
+            
+            if (hashResponse.status === 200 && hashData) {
+                // Update the teacher record with hashed password
+                await supabasePatch('teachers', `id=eq.${teacher.id}`, {
+                    password_hash: hashData
+                });
+            }
+        } else {
+            showStatus('Invalid credentials. Please check your teacher ID and password.');
+            return;
+        }
+        
+        // Store teacher information in localStorage
         localStorage.setItem('currentTeacher', JSON.stringify({
             id: teacher.id,
             name: teacher.name,

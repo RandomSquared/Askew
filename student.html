@@ -6,6 +6,8 @@
     <title>Student - Attendance System</title>
     <!-- Link to external CSS file for styling -->
     <link rel="stylesheet" href="styles.css">
+    <!-- Supabase JS Client for Authentication -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <!-- Main container for student interface -->
@@ -13,7 +15,12 @@
         <h1>Student Attendance</h1>
         
         <!-- Display logged in student information -->
-        <p id="student-info"></p>
+        <div id="student-info" class="student-info-card">
+            <p><strong>Name:</strong> <span id="student-name"></span></p>
+            <p><strong>Student ID:</strong> <span id="student-id" class="student-id-highlight"></span></p>
+            <p><strong>Email:</strong> <span id="student-email"></span></p>
+            <p id="email-verification-status"></p>
+        </div>
         
         <!-- Logout button -->
         <button class="secondary" onclick="logout()">Logout</button>
