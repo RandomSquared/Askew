@@ -12,9 +12,6 @@
  * Dependencies: shared.js (for API helpers and location calculation)
  */
 
-// Supabase configuration
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqenZ1aWx5anVoeGN5dWdqYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTM3NzYsImV4cCI6MjA5NDAyOTc3Nn0.QJJ-re0UGlmCiIH1fOgUSbWXCLi0IkvIbAUNDysEEF8';
-
 // Global variables to store teacher and session information
 let currentTeacher = null; // Stores teacher name and ID
 let currentSessionId = null; // ID of the active marking session
@@ -199,9 +196,11 @@ async function loadEnrolledStudents() {
  * Stores the class in the database and displays the code to the teacher
  */
 async function createClass() {
-    console.log('Creating class...');
+    console.log('createClass() called');
+    console.log('Current teacher:', currentTeacher);
     
     const className = document.getElementById('class-name').value.trim();
+    console.log('Class name entered:', className);
     
     // Validate class name is provided
     if (!className) {
@@ -309,7 +308,10 @@ async function createClass() {
  * 4. Starts monitoring for student responses
  */
 async function beginMarking() {
+    console.log('beginMarking() called');
+    
     const classId = document.getElementById('class-select').value;
+    console.log('Selected class ID:', classId);
     
     // Validate a class is selected
     if (!classId) {
@@ -318,8 +320,10 @@ async function beginMarking() {
     }
     
     try {
+        console.log('Getting teacher location...');
         // Get teacher's current location
         const teacherLocation = await getCurrentLocation();
+        console.log('Teacher location obtained:', teacherLocation);
         
         // Create a marking session using direct REST API
         const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/marking_sessions', {
@@ -338,6 +342,7 @@ async function beginMarking() {
         });
         
         const sessions = await response.json();
+        console.log('Marking session response:', sessions);
         
         if (!Array.isArray(sessions) || sessions.length === 0) {
             throw new Error('Failed to create marking session');
@@ -345,6 +350,7 @@ async function beginMarking() {
         
         // Store the session ID
         currentSessionId = sessions[0].id;
+        console.log('Session ID stored:', currentSessionId);
         
         // Update UI to show marking is active
         document.getElementById('close-marking-button').style.display = 'block';

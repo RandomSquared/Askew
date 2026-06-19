@@ -1,25 +1,17 @@
 /*
- * Attendance System - Stylesheet
- * 
- * This file contains CSS styling for the attendance system.
- * Currently a placeholder for future styling implementation.
- * 
- * Future enhancements:
- * - Responsive design for mobile devices
- * - Color scheme and typography
- * - Button and input styling
- * - Layout improvements
- * - Animations and transitions
+ * This file contains CSS styling
  */
 
 :root {
     --white: #ffffff;
     --highlight-colour-1: #812eff;
-    --text-color-fg-1: #ffffff;
+    --text-colour-fg-1: #ffffff;
     --highlight-colour-2: #2d54ff;
     --text-colour-fg-2: #ffffff;
     --highlight-colour-3: #ffffff;
     --text-colour-fg-3: #000000;
+    --highlight-colour-4: #0091ff;
+    --text-colour-fg-4: #ffffff;
     --background-colour-1: #d8d0ff;
     --text-colour-bg-1: #000000;
     --text-colour-bg-2: #333333;
@@ -72,9 +64,7 @@
     --card-padding: var(--spacing-2-1);
 }
 
-/* ========================================
-   BASE STYLES & TYPOGRAPHY
-   ======================================== */
+/* Defaults */
 
 * {
     box-sizing: border-box;
@@ -123,12 +113,10 @@ h4 {
 }
 
 p {
-    margin-bottom: var(--spacing-2);
+    margin: 0px;
 }
 
-/* ========================================
-   LAYOUT & CONTAINER
-   ======================================== */
+/* container */
 
 .container {
     max-width: 800px;
@@ -136,16 +124,14 @@ p {
     padding: 20px;
 }
 
-/* ========================================
-   FIXED HEADER
-   ======================================== */
+/* Header */
 
 .header {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 70px;
+    height: 50px;
     background-color: var(--white);
     box-shadow: var(--shadow-md);
     z-index: 1000;
@@ -162,11 +148,14 @@ p {
     font-size: var(--font-size-body);
     font-weight: var(--font-weight-semibold);
     width: auto;
+    border-radius: var(--border-radius-lg);
 }
 
-/* ========================================
-   CENTERED TITLE
-   ======================================== */
+.header button:hover {
+    background-color: var(--highlight-colour-2);
+}
+
+/* Title */
 
 .centered-title {
     position: fixed;
@@ -183,9 +172,7 @@ p {
     font-variant: small-caps;
 }
 
-/* ========================================
-   TILTABLE CONTENT
-   ======================================== */
+/* Tilt stuff */
 
 .tiltable-content {
     min-height: 100vh;
@@ -222,15 +209,23 @@ section {
     margin-bottom: var(--spacing-5);
 }
 
-/* ========================================
-   BUTTON STYLING
-   ======================================== */
+/* Buttons */
 
 button {
-    /* Future button styling */
     border: none;
-    padding: 3px 5px;
-    border-radius: 5px;
+    padding: var(--spacing-2) var(--spacing-2);
+    border-radius: var(--border-radius-lg);
+    width: 100%;
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: background-color var(--transition-duration) var(--transition-timing);
+    background-color: var(--highlight-colour-1);
+    color: var(--text-colour-fg-1);
+    margin: var(--spacing-1) 0px;
+}
+
+button:hover {
+    background-color: var(--highlight-colour-2);
 }
 
 /* Secondary button style */
@@ -244,9 +239,7 @@ button.secondary:hover {
     background-color: var(--background-colour-1);
 }
 
-/* ========================================
-   INPUT & SELECT STYLING
-   ======================================== */
+/* Input & Select */
 
 input,
 select {
@@ -267,9 +260,7 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(129, 46, 255, 0.1);
 }
 
-/* ========================================
-   TAB NAVIGATION STYLING
-   ======================================== */
+/* Tab Navigation */
 
 .tab-buttons {
     display: flex;
@@ -284,11 +275,12 @@ select:focus {
     background-color: var(--white);
     color: var(--text-colour-bg-1);
     border: var(--border-width) solid var(--border-colour);
+    border-radius: var(--border-radius-lg);
 }
 
 .tab-buttons button.active {
     background-color: var(--highlight-colour-1);
-    color: var(--text-colour-fg-1); 
+    color: var(--text-colour-fg-1);
     border-color: var(--highlight-colour-1);
 }
 
@@ -297,9 +289,7 @@ select:focus {
     color: var(--text-colour-fg-2);
 }
 
-/* ========================================
-   LOGIN SECTION STYLING
-   ======================================== */
+/* Login */
 
 .login-section {
     display: none;
@@ -309,9 +299,17 @@ select:focus {
     display: block;
 }
 
-/* ========================================
-   UTILITY CLASSES
-   ======================================== */
+/* Status */
+
+#login-status,
+#status-message {
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    margin-bottom: var(--spacing-2);
+}
+
+/* Utilities */
 
 .text-center {
     text-align: center;
@@ -333,16 +331,13 @@ select:focus {
     margin-bottom: var(--spacing-4);
 }
 
-/* ========================================
-   STUDENT INFO CARD STYLING
-   ======================================== */
+/* Student Card */
 
 .student-info-card {
-    background-color: var(--highlight-colour-2);
+    background-color: var(--highlight-colour-4);
     padding: var(--spacing-4);
     border-radius: var(--border-radius-lg);
     margin-bottom: var(--spacing-4);
-    border: 2px solid var(--highlight-colour-1);
     box-shadow: var(--shadow-md);
 }
 
@@ -355,6 +350,15 @@ select:focus {
     color: var(--text-colour-fg-1);
     font-weight: var(--font-weight-bold);
 }
+
+.student-info-card span {
+    color: var(--text-colour-fg-4);
+}
+
+#student-id {
+  color: #000000;
+}
+
 
 .student-id-highlight {
     font-size: 1.5rem;
@@ -376,9 +380,7 @@ select:focus {
     opacity: 0.8;
 }
 
-/* ========================================
-   MOBILE RESPONSIVENESS
-   ======================================== */
+/* Mobile */
 
 @media (max-width: 768px) {
     body {

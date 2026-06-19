@@ -12,10 +12,6 @@
  * Dependencies: shared.js (for API helpers)
  */
 
-// Supabase configuration
-const SUPABASE_REST_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqenZ1aWx5anVoeGN5dWdqYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTM3NzYsImV4cCI6MjA5NDAyOTc3Nn0.QJJ-re0UGlmCiIH1fOgUSbWXCLi0IkvIbAUNDysEEF8';
-
 // Database helper functions defined locally to avoid scope issues
 async function supabaseGet(table, filters = '') {
     const url = `${SUPABASE_REST_URL}${table}?${filters}`;
@@ -131,26 +127,26 @@ function showTab(tabName) {
     document.getElementById('teacher-login-section').style.display = 'none';
     
     // Reset all tab button styles
-    document.getElementById('tab-student-login').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('tab-student-signup').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('tab-teacher-login').style.backgroundColor = 'var(--background-color-1)';
-    document.getElementById('tab-student-login').style.color = 'var(--text-color-bg-1)';
-    document.getElementById('tab-student-signup').style.color = 'var(--text-color-bg-1)';
-    document.getElementById('tab-teacher-login').style.color = 'var(--text-color-bg-1)';
+    document.getElementById('tab-student-login').style.backgroundColor = 'var(--background-colour-1)';
+    document.getElementById('tab-student-signup').style.backgroundColor = 'var(--background-colour-1)';
+    document.getElementById('tab-teacher-login').style.backgroundColor = 'var(--background-colour-1)';
+    document.getElementById('tab-student-login').style.color = 'var(--text-colour-bg-1)';
+    document.getElementById('tab-student-signup').style.color = 'var(--text-colour-bg-1)';
+    document.getElementById('tab-teacher-login').style.color = 'var(--text-colour-bg-1)';
     
     // Show the selected section and highlight its button
     if (tabName === 'student-login') {
         document.getElementById('student-login-section').style.display = 'block';
         document.getElementById('tab-student-login').style.backgroundColor = 'var(--highlight-colour-1)';
-        document.getElementById('tab-student-login').style.color = 'var(--text-color-fg-1)';
+        document.getElementById('tab-student-login').style.color = 'var(--text-colour-fg-1)';
     } else if (tabName === 'student-signup') {
         document.getElementById('student-signup-section').style.display = 'block';
         document.getElementById('tab-student-signup').style.backgroundColor = 'var(--highlight-colour-1)';
-        document.getElementById('tab-student-signup').style.color = 'var(--text-color-fg-1)';
+        document.getElementById('tab-student-signup').style.color = 'var(--text-colour-fg-1)';
     } else if (tabName === 'teacher-login') {
         document.getElementById('teacher-login-section').style.display = 'block';
         document.getElementById('tab-teacher-login').style.backgroundColor = 'var(--highlight-colour-1)';
-        document.getElementById('tab-teacher-login').style.color = 'var(--text-color-fg-1)';
+        document.getElementById('tab-teacher-login').style.color = 'var(--text-colour-fg-1)';
     }
     
     // Clear any status messages
@@ -177,11 +173,17 @@ async function studentLogin() {
     try {
         // Check if the input is a student ID (starts with STU)
         let email = emailOrId;
-        if (emailOrId.toUpperCase().startsWith('STU')) {
-            // Look up email by student ID
+        // Check if the input is a student ID (with or without STU prefix)
+        const isStudentId = emailOrId.toUpperCase().startsWith('STU') || /^\d{6}$/.test(emailOrId);
+        
+        if (isStudentId) {
+            // Normalize the student ID (add STU prefix if not present)
+            const studentId = emailOrId.toUpperCase().startsWith('STU') ? emailOrId : `STU${emailOrId}`;
+            
+            // Look up student by student ID
             const students = await supabaseGet(
                 'students',
-                `student_id=eq.${emailOrId}`
+                `student_id=eq.${studentId}`
             );
             
             if (students.length === 0) {
@@ -189,21 +191,18 @@ async function studentLogin() {
                 return;
             }
             
-            // Get the email from auth.users using the user_id
             const student = students[0];
-            if (!student.user_id) {
-                showStatus('Account not properly set up. Please contact support.');
+            if (!student.email) {
+                showStatus('No email associated with this student ID. Please contact support.');
                 return;
             }
             
-            // We need to get the email from auth.users, but we can't directly access it
-            // For now, we'll ask the user to use their email instead
-            showStatus('Please use your email address to login instead of student ID.');
-            return;
+            // Use the email from the student record
+            email = student.email;
         }
         
         // Always use direct REST API for authentication (most reliable)
-        console.log('Using direct REST API for login');
+        console.log('Using direct REST API for login with email:', email);
         const response = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/auth/v1/token?grant_type=password', {
             method: 'POST',
             headers: {
@@ -222,6 +221,11 @@ async function studentLogin() {
         // Handle different response structures from Supabase REST API
         const user = data.user || data;
         const session = data.session || null;
+        
+        // Store session in localStorage for supabaseAuth to retrieve
+        if (session && session.access_token) {
+            localStorage.setItem('supabase-auth-token', session.access_token);
+        }
         
         const authResult = { data: { user: user, session: session }, error: null };
         const { data: authData, error } = authResult;
@@ -289,6 +293,10 @@ function validatePassword(password) {
     
     if (!/\d/.test(password)) {
         return { valid: false, message: 'Password must contain at least 1 number' };
+    }
+    
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        return { valid: false, message: 'Password must contain at least 1 special character' };
     }
     
     return { valid: true, message: '' };
@@ -364,6 +372,11 @@ async function studentSignup() {
         const session = data.session || null;
         const accessToken = data.access_token || session?.access_token || null;
         
+        // Store session in localStorage for supabaseAuth to retrieve
+        if (accessToken) {
+            localStorage.setItem('supabase-auth-token', accessToken);
+        }
+        
         const authResult = { data: { user: user, session: session }, error: null };
         const { data: authData, error } = authResult;
         
@@ -391,6 +404,7 @@ async function studentSignup() {
                 p_name: name,
                 p_user_id: authData.user.id,
                 p_student_id: studentId,
+                p_email: email,
                 p_email_verified: false
             })
         });

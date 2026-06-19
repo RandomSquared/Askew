@@ -1,24 +1,21 @@
 /*
- * Student Interface Logic - Attendance System
+ * Student dashboard
  * 
  * This file handles all student-side functionality:
  * - Joining a class using a class code
- * - Waiting for teacher to start marking via Realtime subscription
+ * - Waiting for teacher to start marking via Realtime
  * - Marking attendance with location verification
- * - Privacy protection: student location is never stored in database
+ * - Student location is never stored (Privacy)
  * 
- * Dependencies: shared.js (for API helpers and location calculation)
+ * Dependencies: shared.js (API helpers, location calculation)
  */
-
-// Supabase configuration
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqenZ1aWx5anVoeGN5dWdqYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTM3NzYsImV4cCI6MjA5NDAyOTc3Nn0.QJJ-re0UGlmCiIH1fOgUSbWXCLi0IkvIbAUNDysEEF8';
 
 // Global variables to store student and class information
 let currentClass = null; // Stores the class the student has joined
 let currentStudent = null; // Stores student name and ID
 let currentAuthToken = null; // Stores the auth token for authenticated API calls
 let markingSessionId = null; // ID of the active marking session
-let realtimeSubscription = null; // Realtime subscription for marking signals
+let realtimeSubscription = null; // Realtime for marking signals
 
 // Load saved classes from localStorage on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -45,43 +42,75 @@ async function checkStudentLogin() {
     // Parse and store student information
     currentStudent = JSON.parse(savedStudent);
     
+    // Ensure email_verified is set (default to false if not present)
+    if (currentStudent.email_verified === undefined || currentStudent.email_verified === null) {
+        currentStudent.email_verified = false;
+    }
+    
     // Check Supabase Auth session and get token
-    if (supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-            // Session expired, redirect to login
-            localStorage.removeItem('currentStudent');
-            alert('Session expired. Please login again.');
-            window.location.href = 'login.html?type=student-login';
-            return false;
-        }
-        
-        // Store auth token for authenticated API calls
-        currentAuthToken = session.access_token;
-        
-        // Fetch fresh student data using RPC function
+    if (supabaseAuth) {
         try {
-            const rpcResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_student_by_user_id', {
-                method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ p_user_id: session.user.id })
-            });
+            console.log('Attempting to get session...');
+            const { data: { session } } = await supabaseAuth.auth.getSession();
+            console.log('Session result:', session);
             
-            const students = await rpcResponse.json();
-            if (Array.isArray(students) && students.length > 0) {
-                const student = students[0];
-                currentStudent.student_id = student.student_id;
-                currentStudent.email_verified = student.email_verified;
+            if (session) {
+                // Store auth token for authenticated API calls
+                currentAuthToken = session.access_token;
                 
-                // Update localStorage with fresh data
-                localStorage.setItem('currentStudent', JSON.stringify(currentStudent));
+                // Check if email is verified in Supabase Auth
+                const isEmailVerified = !!session.user.email_confirmed_at;
+                console.log('Email confirmed at:', session.user.email_confirmed_at, 'isEmailVerified:', isEmailVerified);
+                
+                // Fetch fresh student data using RPC function
+                try {
+                    const rpcResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_student_by_user_id', {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ p_user_id: session.user.id })
+                    });
+                    
+                    const students = await rpcResponse.json();
+                    console.log('RPC response students:', students);
+                    
+                    if (Array.isArray(students) && students.length > 0) {
+                        const student = students[0];
+                        console.log('Student from RPC:', student);
+                        currentStudent.student_id = student.student_id;
+                        
+                        // Update email_verified from Supabase Auth if different
+                        console.log('Database email_verified:', student.email_verified, 'Auth email_verified:', isEmailVerified);
+                        if (student.email_verified !== isEmailVerified) {
+                            // Update the students table with the correct email_verified status
+                            await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/students?id=eq.${student.id}`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'apikey': SUPABASE_KEY,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ email_verified: isEmailVerified })
+                            });
+                            currentStudent.email_verified = isEmailVerified;
+                            console.log('Updated email_verified to:', isEmailVerified);
+                        } else {
+                            currentStudent.email_verified = student.email_verified;
+                            console.log('Using database email_verified:', student.email_verified);
+                        }
+                        
+                        // Update localStorage with fresh data
+                        localStorage.setItem('currentStudent', JSON.stringify(currentStudent));
+                    }
+                } catch (error) {
+                    console.error('Error fetching student data:', error);
+                }
             }
+            // If session is null, we'll continue with localStorage data (less secure but functional)
         } catch (error) {
-            console.error('Error fetching student data:', error);
+            console.error('Error checking session:', error);
+            // Continue with localStorage data if session check fails
         }
     }
     
@@ -92,10 +121,17 @@ async function checkStudentLogin() {
     
     // Display email verification status
     const verificationStatus = document.getElementById('email-verification-status');
+    const reverifyBtn = document.getElementById('reverify-email-btn');
+    
+    console.log('Email verification status:', currentStudent.email_verified);
+    
     if (currentStudent.email_verified) {
-        verificationStatus.innerHTML = '<span style="color: green;">✓ Email verified</span>';
+        // Hide verification status if email is verified
+        verificationStatus.innerHTML = '';
+        if (reverifyBtn) reverifyBtn.style.display = 'none';
     } else {
-        verificationStatus.innerHTML = '<span style="color: orange;">⚠ Email not verified. Please check your inbox.</span>';
+        verificationStatus.innerHTML = '<span style="color: var(--text-colour-fg-4);">⚠ Email not verified. Please check your inbox.</span>';
+        if (reverifyBtn) reverifyBtn.style.display = 'block';
     }
     
     return true;
@@ -107,8 +143,8 @@ async function checkStudentLogin() {
  */
 async function logout() {
     // Sign out from Supabase Auth
-    if (supabase) {
-        await supabase.auth.signOut();
+    if (supabaseAuth) {
+        await supabaseAuth.auth.signOut();
     }
     
     // Clear student data from localStorage
@@ -116,6 +152,39 @@ async function logout() {
     
     // Redirect to main menu
     window.location.href = 'index.html';
+}
+
+/**
+ * Resend verification email to the student
+ * Uses Supabase Auth to send a new verification email
+ */
+async function resendVerificationEmail() {
+    if (!currentStudent || !currentStudent.email) {
+        alert('No email associated with this account');
+        return;
+    }
+    
+    try {
+        console.log('Attempting to resend verification email to:', currentStudent.email);
+        
+        // Use signup type for email verification
+        const { data, error } = await supabaseAuth.auth.resend({
+            type: 'signup',
+            email: currentStudent.email
+        });
+        
+        console.log('Resend response:', data, error);
+        
+        if (error) {
+            throw new Error(error.message);
+        }
+        
+        alert('Verification email sent! Please check your inbox.');
+        
+    } catch (error) {
+        console.error('Error resending verification email:', error);
+        alert('Error resending verification email: ' + error.message);
+    }
 }
 
 // Override the loadSavedClasses to include login check

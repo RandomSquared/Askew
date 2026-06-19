@@ -16,7 +16,8 @@ const SUPABASE_REST_URL = 'https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqenZ1aWx5anVoeGN5dWdqYXpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NTM3NzYsImV4cCI6MjA5NDAyOTc3Nn0.QJJ-re0UGlmCiIH1fOgUSbWXCLi0IkvIbAUNDysEEF8';
 
 // Initialize Supabase Auth client (will be initialized after library loads)
-let supabase = null;
+// Use window.supabaseAuth to avoid conflict with CDN global
+let supabaseAuth = null;
 
 // Set up REST API fallback immediately (always available)
 const restApiAuth = {
@@ -56,7 +57,43 @@ const restApiAuth = {
         getSession: async () => {
             const token = localStorage.getItem('supabase-auth-token');
             if (!token) return { data: { session: null }, error: null };
-            return { data: { session: { access_token: token, user: { id: 'fallback' } } }, error: null };
+            
+            // Try to get user info from Supabase Auth API using the token
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const user = await response.json();
+                if (user.error) {
+                    // If token is invalid, clear it and return null session
+                    localStorage.removeItem('supabase-auth-token');
+                    return { data: { session: null }, error: null };
+                }
+                return { data: { session: { access_token: token, user: user } }, error: null };
+            } catch (error) {
+                // Fallback to simple session if API call fails
+                return { data: { session: { access_token: token, user: { id: 'fallback' } } }, error: null };
+            }
+        },
+        resend: async ({ type, email }) => {
+            console.log('Using REST API for resend');
+            const response = await fetch(`${SUPABASE_URL}/auth/v1/resend`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ type, email })
+            });
+            const data = await response.json();
+            console.log('Resend API response:', response.status, data);
+            if (data.error) throw new Error(data.error.message);
+            return { data, error: null };
         }
     }
 };
@@ -66,7 +103,7 @@ function initializeSupabaseAuth() {
     console.log('window.supabase available:', typeof window.supabase);
     
     // Always use REST API fallback for reliability
-    supabase = restApiAuth;
+    supabaseAuth = restApiAuth;
     console.log('Using REST API fallback for authentication');
     
     // Try to use CDN if available, but fallback to REST API
@@ -80,7 +117,7 @@ function initializeSupabaseAuth() {
         }
     }
     
-    console.log('Supabase client final state:', supabase ? 'available' : 'null');
+    console.log('Supabase client final state:', supabaseAuth ? 'available' : 'null');
 }
 
 /**
