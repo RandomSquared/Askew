@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Askew - Teacher Sign Up</title>
+    <!-- Link to external CSS file for styling -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main container for teacher signup page -->
+    <div class="container">
+        <h1>Teacher Sign Up</h1>
+        
+        <!-- Teacher Sign Up Section -->
+        <div id="teacher-signup-section" class="login-section">
+            <h2>Create Teacher Account</h2>
+            <input type="text" id="teacher-signup-name" placeholder="Your name">
+            <input type="password" id="teacher-signup-password" placeholder="Password (8+ chars, 1 number, 1 special character)">
+            <input type="password" id="teacher-signup-confirm-password" placeholder="Confirm Password">
+            <button onclick="teacherSignup()">Sign Up as Teacher</button>
+        </div>
+        
+        <!-- Status message display -->
+        <p id="signup-status"></p>
+        
+        <!-- Button to return to main menu -->
+        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
+    </div>
+    
+    <!-- Load shared utilities -->
+    <script src="shared.js"></script>
+    <!-- Load teacher signup logic -->
+    <script src="teacher-signup.js"></script>
+</body>
+</html>

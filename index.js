@@ -1,5 +1,5 @@
 /*
- * Main Menu Logic - Attendance System
+ * Main Menu
  * 
  * This file handles functionality for the main menu page (index.html)
  * Implements automatic drifting tilt effect that changes direction periodically
@@ -24,6 +24,9 @@ let animationFrameId = null;
 function initializeMainMenu() {
     console.log('Main menu initialized');
 
+    // Check for existing login sessions and auto-redirect
+    checkForExistingSession();
+
     tiltContent = document.getElementById('tiltable-content');
 
     if (!tiltContent) {
@@ -33,6 +36,29 @@ function initializeMainMenu() {
 
     // Start the tilt effect
     startTiltEffect();
+}
+
+/**
+ * Check for existing login sessions in localStorage and auto-redirect
+ */
+function checkForExistingSession() {
+    const savedStudent = localStorage.getItem('currentStudent');
+    const savedTeacher = localStorage.getItem('currentTeacher');
+    
+    // Priority: student first, then teacher
+    if (savedStudent) {
+        console.log('Found existing student session, redirecting to student dashboard');
+        window.location.href = 'student.html';
+        return;
+    }
+    
+    if (savedTeacher) {
+        console.log('Found existing teacher session, redirecting to teacher dashboard');
+        window.location.href = 'teacher.html';
+        return;
+    }
+    
+    console.log('No existing session found, staying on main menu');
 }
 
 /**

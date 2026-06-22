@@ -3,20 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher - Attendance System</title>
+    <title>Askew - Teacher Dashboard</title>
     <!-- Link to external CSS file for styling -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Main container for teacher interface -->
     <div class="container">
-        <h1>Teacher Dashboard</h1>
+        <h1>Askew - Teacher Dashboard</h1>
         
         <!-- Display logged in teacher information -->
         <p id="teacher-info"></p>
-        
-        <!-- Logout button -->
-        <button onclick="logout()" style="margin-top: 10px;">Logout</button>
         
         <!-- Dashboard section (shown by default since teacher is logged in) -->
         <div id="dashboard-section">
@@ -63,9 +60,10 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Button to return to main menu -->
-        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
+                <!-- Logout button -->
+        <div class="button-row">
+            <button onclick="logout()">Logout</button>
+        </div>
     </div>
     
     <!-- Load shared utilities -->

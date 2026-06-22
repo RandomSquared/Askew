@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student - Attendance System</title>
+    <title>Askew - Student Dashboard</title>
     <!-- Link to external CSS file for styling -->
     <link rel="stylesheet" href="styles.css">
     <!-- Supabase JS Client for Authentication -->
@@ -12,19 +12,15 @@
 <body>
     <!-- Main container for student interface -->
     <div class="container">
-        <h1>Student Attendance</h1>
+        <h1>Askew - Student Dashboard</h1>
         
         <!-- Display logged in student information -->
         <div id="student-info" class="student-info-card">
             <p><strong>Name:</strong> <span id="student-name"></span></p>
             <p><strong>Student ID:</strong> <span id="student-id" class="student-id-highlight"></span></p>
             <p><strong>Email:</strong> <span id="student-email"></span></p>
-            <p id="email-verification-status"></p>
-            <button id="reverify-email-btn" onclick="resendVerificationEmail()" style="display: none; margin-top: 10px;">Resend Verification Email</button>
         </div>
         
-        <!-- Logout button -->
-        <button onclick="logout()" style="margin-top: 10px;">Logout</button>
         
         <!-- Section for joining a class -->
         <div id="join-section">
@@ -46,9 +42,11 @@
             <!-- Status message display -->
             <p id="status-message"></p>
         </div>
-        
-        <!-- Button to return to main menu -->
-        <button onclick="window.location.href='index.html'">Back to Main Menu</button>
+                <!-- Navigation buttons -->
+        <div class="button-row">
+            <button onclick="backToDashboard()">Back to Dashboard</button>
+            <button onclick="logout()">Logout</button>
+        </div>
     </div>
     
     <!-- Load shared utilities -->

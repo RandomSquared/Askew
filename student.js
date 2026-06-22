@@ -13,7 +13,6 @@
 // Global variables to store student and class information
 let currentClass = null; // Stores the class the student has joined
 let currentStudent = null; // Stores student name and ID
-let currentAuthToken = null; // Stores the auth token for authenticated API calls
 let markingSessionId = null; // ID of the active marking session
 let realtimeSubscription = null; // Realtime for marking signals
 
@@ -42,10 +41,6 @@ async function checkStudentLogin() {
     // Parse and store student information
     currentStudent = JSON.parse(savedStudent);
     
-    // Ensure email_verified is set (default to false if not present)
-    if (currentStudent.email_verified === undefined || currentStudent.email_verified === null) {
-        currentStudent.email_verified = false;
-    }
     
     // Check Supabase Auth session and get token
     if (supabaseAuth) {
@@ -55,13 +50,6 @@ async function checkStudentLogin() {
             console.log('Session result:', session);
             
             if (session) {
-                // Store auth token for authenticated API calls
-                currentAuthToken = session.access_token;
-                
-                // Check if email is verified in Supabase Auth
-                const isEmailVerified = !!session.user.email_confirmed_at;
-                console.log('Email confirmed at:', session.user.email_confirmed_at, 'isEmailVerified:', isEmailVerified);
-                
                 // Fetch fresh student data using RPC function
                 try {
                     const rpcResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/get_student_by_user_id', {
@@ -80,25 +68,6 @@ async function checkStudentLogin() {
                         const student = students[0];
                         console.log('Student from RPC:', student);
                         currentStudent.student_id = student.student_id;
-                        
-                        // Update email_verified from Supabase Auth if different
-                        console.log('Database email_verified:', student.email_verified, 'Auth email_verified:', isEmailVerified);
-                        if (student.email_verified !== isEmailVerified) {
-                            // Update the students table with the correct email_verified status
-                            await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/students?id=eq.${student.id}`, {
-                                method: 'PATCH',
-                                headers: {
-                                    'apikey': SUPABASE_KEY,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ email_verified: isEmailVerified })
-                            });
-                            currentStudent.email_verified = isEmailVerified;
-                            console.log('Updated email_verified to:', isEmailVerified);
-                        } else {
-                            currentStudent.email_verified = student.email_verified;
-                            console.log('Using database email_verified:', student.email_verified);
-                        }
                         
                         // Update localStorage with fresh data
                         localStorage.setItem('currentStudent', JSON.stringify(currentStudent));
@@ -119,22 +88,26 @@ async function checkStudentLogin() {
     document.getElementById('student-id').textContent = currentStudent.student_id || 'Loading...';
     document.getElementById('student-email').textContent = currentStudent.email || 'N/A';
     
-    // Display email verification status
-    const verificationStatus = document.getElementById('email-verification-status');
-    const reverifyBtn = document.getElementById('reverify-email-btn');
-    
-    console.log('Email verification status:', currentStudent.email_verified);
-    
-    if (currentStudent.email_verified) {
-        // Hide verification status if email is verified
-        verificationStatus.innerHTML = '';
-        if (reverifyBtn) reverifyBtn.style.display = 'none';
-    } else {
-        verificationStatus.innerHTML = '<span style="color: var(--text-colour-fg-4);">⚠ Email not verified. Please check your inbox.</span>';
-        if (reverifyBtn) reverifyBtn.style.display = 'block';
-    }
     
     return true;
+}
+
+/**
+ * Return to the main dashboard view from marking section
+ * Hides marking section and shows join class section
+ */
+function backToDashboard() {
+    document.getElementById('marking-section').style.display = 'none';
+    document.getElementById('join-section').style.display = 'block';
+    
+    // Reset marking session state
+    markingSessionId = null;
+    document.getElementById('mark-button').style.display = 'none';
+    document.getElementById('status-message').textContent = '';
+    
+    // Stop any polling if active
+    // Note: The polling function uses setTimeout, so it will naturally stop
+    // when we change the UI state
 }
 
 /**
@@ -154,38 +127,6 @@ async function logout() {
     window.location.href = 'index.html';
 }
 
-/**
- * Resend verification email to the student
- * Uses Supabase Auth to send a new verification email
- */
-async function resendVerificationEmail() {
-    if (!currentStudent || !currentStudent.email) {
-        alert('No email associated with this account');
-        return;
-    }
-    
-    try {
-        console.log('Attempting to resend verification email to:', currentStudent.email);
-        
-        // Use signup type for email verification
-        const { data, error } = await supabaseAuth.auth.resend({
-            type: 'signup',
-            email: currentStudent.email
-        });
-        
-        console.log('Resend response:', data, error);
-        
-        if (error) {
-            throw new Error(error.message);
-        }
-        
-        alert('Verification email sent! Please check your inbox.');
-        
-    } catch (error) {
-        console.error('Error resending verification email:', error);
-        alert('Error resending verification email: ' + error.message);
-    }
-}
 
 // Override the loadSavedClasses to include login check
 const originalLoadSavedClasses = loadSavedClasses;
@@ -230,9 +171,9 @@ function loadSavedClasses() {
 
 /**
  * Select a previously saved class
- * @param {string} classId - The class ID
- * @param {string} classCode - The class code
- * @param {string} className - The class name
+ * @param {string} classId
+ * @param {string} classCode 
+ * @param {string} className
  */
 async function selectSavedClass(classId, classCode, className) {
     try {
@@ -369,9 +310,7 @@ async function joinClass() {
  * When teacher starts marking, the "Mark Me Here" button appears
  */
 function listenForMarkingSignal() {
-    // Use Supabase Realtime to subscribe to marking_sessions for this class
-    // Note: This is a simplified implementation using polling for MVP
-    // In production, use Supabase Realtime WebSocket subscriptions
+    // Use Supabase Realtime to run marking_sessions for this class
     
     // Start polling for active marking sessions
     pollForMarkingSession();

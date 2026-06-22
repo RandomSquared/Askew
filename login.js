@@ -30,18 +30,13 @@ async function supabaseGet(table, filters = '') {
     return await response.json();
 }
 
-async function supabasePost(table, data, authToken = null) {
+async function supabasePost(table, data) {
     const url = `${SUPABASE_REST_URL}${table}`;
     const headers = {
         'apikey': SUPABASE_KEY,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
     };
-    
-    // Add auth token if provided
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-    }
     
     const response = await fetch(url, {
         method: 'POST',
@@ -56,18 +51,13 @@ async function supabasePost(table, data, authToken = null) {
     return await response.json();
 }
 
-async function supabasePatch(table, filters, data, authToken = null) {
+async function supabasePatch(table, filters, data) {
     const url = `${SUPABASE_REST_URL}${table}?${filters}`;
     const headers = {
         'apikey': SUPABASE_KEY,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
     };
-    
-    // Add auth token if provided
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-    }
     
     const response = await fetch(url, {
         method: 'PATCH',
@@ -221,10 +211,14 @@ async function studentLogin() {
         // Handle different response structures from Supabase REST API
         const user = data.user || data;
         const session = data.session || null;
+        const accessToken = data.access_token || session?.access_token || null;
         
         // Store session in localStorage for supabaseAuth to retrieve
-        if (session && session.access_token) {
-            localStorage.setItem('supabase-auth-token', session.access_token);
+        if (accessToken) {
+            localStorage.setItem('supabase-auth-token', accessToken);
+            console.log('Stored access token in localStorage');
+        } else {
+            console.log('No access token found in response:', data);
         }
         
         const authResult = { data: { user: user, session: session }, error: null };
@@ -237,7 +231,7 @@ async function studentLogin() {
         
         // Check if email is verified
         if (!authData.user.email_confirmed_at) {
-            showStatus('Please verify your email before logging in. Check your inbox for the verification link.');
+            showStatus('There was an error in logging in. Please check that your password is correct.');
             return;
         }
         
@@ -446,13 +440,18 @@ function generateStudentId() {
  */
 async function teacherLogin() {
     const name = document.getElementById('teacher-login-name').value.trim();
-    const teacherId = document.getElementById('teacher-login-id').value.trim();
+    let teacherId = document.getElementById('teacher-login-id').value.trim();
     const password = document.getElementById('teacher-login-password').value.trim();
     
     // Validate all fields are filled
     if (!name || !teacherId || !password) {
         showStatus('Please fill in all fields');
         return;
+    }
+    
+    // Normalize teacher ID - if just numbers, add TEA prefix
+    if (/^\d{6}$/.test(teacherId)) {
+        teacherId = 'TEA' + teacherId;
     }
     
     try {
@@ -477,7 +476,14 @@ async function teacherLogin() {
         }
         
         const teacher = teachers[0];
-        console.log('Teacher found:', { name: teacher.name, teacher_id: teacher.teacher_id, has_password_hash: !!teacher.password_hash, has_password: !!teacher.password });
+        console.log('Teacher found:', { name: teacher.name, teacher_id: teacher.teacher_id, has_password_hash: !!teacher.password_hash, has_password: !!teacher.password, approved: teacher.approved });
+        
+        // Check if teacher is approved
+        if (!teacher.approved) {
+            console.error('Teacher not approved:', teacherId);
+            showStatus('Your account has not been approved by an administrator yet. Please wait for approval.');
+            return;
+        }
         
         // Verify name matches
         if (teacher.name.toLowerCase() !== name.toLowerCase()) {

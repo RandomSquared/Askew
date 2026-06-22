@@ -145,6 +145,7 @@ p {
     background-color: var(--highlight-colour-1);
     color: var(--text-colour-fg-1);
     padding: var(--spacing-2) var(--spacing-5);
+    margin: 0 var(--spacing-2);
     font-size: var(--font-size-body);
     font-weight: var(--font-weight-semibold);
     width: auto;
@@ -296,6 +297,11 @@ select:focus {
 }
 
 .login-section.active {
+    display: block;
+}
+
+/* Teacher Signup Page - always show the signup section */
+#teacher-signup-section {
     display: block;
 }
 
