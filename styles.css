@@ -445,6 +445,9 @@ select:focus {
         width: 100%;
         min-width: auto;
     }
+    .header button {
+        margin: 0 var(--spacing-1);
+    }
 
     /* Ensure touch targets are at least 44px */
     button,
