@@ -27,6 +27,9 @@ function initializeMainMenu() {
     // Check for existing login sessions and auto-redirect
     checkForExistingSession();
 
+    // Initialize dark mode
+    initializeDarkMode();
+
     tiltContent = document.getElementById('tiltable-content');
 
     if (!tiltContent) {
@@ -106,4 +109,49 @@ function animateTilt() {
 
     // Continue animation loop
     animationFrameId = requestAnimationFrame(animateTilt);
+}
+
+/**
+ * Initialize dark mode from localStorage
+ */
+function initializeDarkMode() {
+    const savedDarkMode = localStorage.getItem('darkMode');
+    
+    if (savedDarkMode === 'true') {
+        document.documentElement.classList.add('dark-mode');
+        updateDarkModeIcon(true);
+    } else {
+        updateDarkModeIcon(false);
+    }
+}
+
+/**
+ * Toggle dark mode on/off
+ */
+function toggleDarkMode() {
+    const isDarkMode = document.documentElement.classList.toggle('dark-mode');
+    
+    // Save preference to localStorage
+    localStorage.setItem('darkMode', isDarkMode);
+    
+    // Update icon
+    updateDarkModeIcon(isDarkMode);
+}
+
+/**
+ * Update the dark mode icon (moon/sun)
+ */
+function updateDarkModeIcon(isDarkMode) {
+    const moonIcon = document.getElementById('moon-icon');
+    const sunIcon = document.getElementById('sun-icon');
+    
+    if (moonIcon && sunIcon) {
+        if (isDarkMode) {
+            moonIcon.style.display = 'none';
+            sunIcon.style.display = 'block';
+        } else {
+            moonIcon.style.display = 'block';
+            sunIcon.style.display = 'none';
+        }
+    }
 }

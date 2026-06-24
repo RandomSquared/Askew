@@ -257,3 +257,15 @@ function getCurrentLocation() {
         );
     });
 }
+
+/**
+ * Initialize dark mode from localStorage
+ * Call this on page load to apply saved dark mode preference
+ */
+function initializeDarkMode() {
+    const savedDarkMode = localStorage.getItem('darkMode');
+    
+    if (savedDarkMode === 'true') {
+        document.documentElement.classList.add('dark-mode');
+    }
+}
