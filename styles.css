@@ -435,6 +435,40 @@ select:focus {
         font-size: 1.25rem;
     }
 
+    /* Header fixes */
+    .header {
+        height: 60px;
+        padding: 0 var(--spacing-3);
+    }
+
+    .header button {
+        padding: var(--spacing-2) var(--spacing-3);
+        font-size: clamp(0.75rem, 2vw, var(--font-size-small));
+        margin: 0 var(--spacing-1);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .header button#dark-mode-toggle {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Centered title fixes */
+    .centered-title {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        margin-top: var(--spacing-6);
+        margin-bottom: var(--spacing-4);
+    }
+
+    .tiltable-content {
+        padding-top: 80px;
+    }
+
     /* Stack buttons vertically on mobile */
     .container > button,
     .tab-buttons {
@@ -444,9 +478,7 @@ select:focus {
     .tab-buttons button {
         width: 100%;
         min-width: auto;
-    }
-    .header button {
-        margin: 0 var(--spacing-1);
+        margin-bottom: var(--spacing-2);
     }
 
     /* Ensure touch targets are at least 44px */
@@ -459,5 +491,55 @@ select:focus {
     /* Adjust card padding for mobile */
     .card {
         padding: var(--spacing-3);
+    }
+
+    /* Button row fixes */
+    .button-row {
+        flex-direction: column;
+        gap: var(--spacing-2);
+    }
+
+    .button-row button {
+        width: 100%;
+    }
+
+    /* Student info card fixes */
+    .student-info-card {
+        padding: var(--spacing-3);
+    }
+
+    .student-info-card p {
+        font-size: var(--font-size-small);
+        margin: var(--spacing-1) 0;
+    }
+
+    .student-id-highlight {
+        font-size: 1.25rem;
+        padding: var(--spacing-1) var(--spacing-2);
+    }
+
+    /* General mobile enhancements */
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        padding-left: max(var(--spacing-2), env(safe-area-inset-left));
+        padding-right: max(var(--spacing-2), env(safe-area-inset-right));
+        padding-top: max(var(--spacing-2), env(safe-area-inset-top));
+        padding-bottom: max(var(--spacing-2), env(safe-area-inset-bottom));
+    }
+
+    /* Prevent horizontal scroll */
+    * {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Improve touch targets */
+    button,
+    input,
+    select {
+        min-height: 48px;
     }
 }
