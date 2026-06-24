@@ -6,7 +6,7 @@
     --white: #ffffff;
     --highlight-colour-1: #812eff;
     --text-colour-fg-1: #ffffff;
-    --highlight-colour-2: #2d54ff;
+    --highlight-colour-2: #5c4aff;
     --text-colour-fg-2: #ffffff;
     --highlight-colour-3: #ffffff;
     --text-colour-fg-3: #000000;
@@ -67,16 +67,16 @@
 
 /* Dark Mode */
 .dark-mode {
-    --highlight-colour-1: #9f4fff;       
+    --highlight-colour-1: #b070ff;       
     --text-colour-fg-1: #ffffff;
-    --highlight-colour-2: #4d6fff;       
+    --highlight-colour-2: #6b86ff;       
     --text-colour-fg-2: #ffffff;
     --highlight-colour-3: #d7cdff;       
     --text-colour-fg-3: #e8e0ff;        
     --highlight-colour-4: #1aaeff;        
     --text-colour-fg-4: #ffffff;
-    --background-colour-1: #3a3259;     
-    --background-colour-2: #334984; 
+    --background-colour-1: #352c58;     
+    --background-colour-2: #2b3e71; 
     --text-colour-bg-1: #ede8ff;          
     --text-colour-bg-2: #a89ec8;          
     --text-colour-bg-3: #6a6080;          

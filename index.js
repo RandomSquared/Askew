@@ -80,16 +80,14 @@ function startTiltEffect() {
  * Adds or removes a small amount of velocity to change direction
  */
 function changeTiltVelocity() {
-    // Randomly decide to add or remove velocity
-    const direction = Math.random() > 0.5 ? 1 : -1;
     
-    // Add a small amount of velocity (between 0.05 and 0.15 degrees per frame)
-    const velocityChange = ((Math.random() * 2 - 1) * 0.002 + 0.002) * direction;
+    // Add a small amount of velocity
+    const velocityChange = ((Math.random() * 2 - 1) * 0.0015 + 0.0015);
     
     tiltVelocity += velocityChange;
 
     // Clamp velocity to prevent it from getting too fast
-    tiltVelocity = Math.max(-0.01, Math.min(0.01, tiltVelocity));
+    tiltVelocity = Math.max(-0.07, Math.min(0.07, tiltVelocity));
 
     console.log('Tilt velocity changed:', tiltVelocity);
 }
