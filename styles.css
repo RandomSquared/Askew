@@ -535,11 +535,5 @@ select:focus {
         max-width: 100%;
         overflow-x: hidden;
     }
-
-    /* Improve touch targets */
-    button,
-    input,
-    select {
-        min-height: 48px;
-    }
 }
+
