@@ -5,7 +5,7 @@ https://randomsquared.github.io/Askew/
 
 ## How to use
 # 1 - prerequisites
-Please use incognito mode when opening the website to prevent any previous cache from overriding your test.
+Please use incognito mode when opening the website to prevent any previous cache from breaking anything.
 
 Then open 2 instances of the website, one to log in as the teacher and one to log in as the student.
 
@@ -15,7 +15,7 @@ The site functions like this, the student enters a class code and self enrolls i
 
 # 3 - Teacher
 You can make a teacher account if desired, however you will not be authenticated unless you have direct access to the supabase. Please use any test accounts provided.
-The teacher's site functions like this, they can make a class, and then a code to join that class will be creaed. 
+The teacher's site functions like this, they can make a class, and then a code to join that class will be created. 
 They can then start marking for that class by pressing a button, allowing students to mark themselves here. This will also require your locational information, temporarily stored on the database to crosscheck the student's location with yours. **ENSURE** that you close marking after all students have finished marking, as this is how your locational information is wiped off of the database.
 
 # 4 - Misc. features

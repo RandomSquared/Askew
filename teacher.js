@@ -320,6 +320,13 @@ async function beginMarking() {
     }
     
     try {
+        // Disable the button to prevent multiple clicks
+        const beginButton = document.querySelector('button[onclick="beginMarking()"]');
+        if (beginButton) {
+            beginButton.disabled = true;
+            beginButton.textContent = 'Starting...';
+        }
+        
         console.log('Getting teacher location...');
         // Get teacher's current location
         const teacherLocation = await getCurrentLocation();
@@ -364,6 +371,13 @@ async function beginMarking() {
     } catch (error) {
         console.error('Error beginning marking:', error);
         alert('Error beginning marking. Please try again.');
+        
+        // Re-enable button on error
+        const beginButton = document.querySelector('button[onclick="beginMarking()"]');
+        if (beginButton) {
+            beginButton.disabled = false;
+            beginButton.textContent = 'Begin Marking';
+        }
     }
 }
 
@@ -514,6 +528,13 @@ async function closeMarking() {
         
         // Update UI
         document.getElementById('close-marking-button').style.display = 'none';
+        
+        // Re-enable the Begin Marking button
+        const beginButton = document.querySelector('button[onclick="beginMarking()"]');
+        if (beginButton) {
+            beginButton.disabled = false;
+            beginButton.textContent = 'Begin Marking';
+        }
         
         // Display final statistics
         const presentCount = allRecords.filter(r => r.status === 'present').length;

@@ -141,36 +141,66 @@ loadSavedClasses = function() {
 };
 
 /**
- * Load saved classes from localStorage
- * Displays list of previously joined classes
+ * Load enrolled classes from database
+ * Displays list of classes the student is enrolled in
  * Note: Student info is now loaded from login, not from this function
  */
-function loadSavedClasses() {
-    const savedClasses = JSON.parse(localStorage.getItem('savedClasses') || '[]');
-    
-    // Display saved classes if any exist
-    if (savedClasses.length > 0) {
-        const savedClassesDiv = document.createElement('div');
-        savedClassesDiv.id = 'saved-classes';
-        savedClassesDiv.innerHTML = '<h3>Your Classes:</h3>';
-        
-        savedClasses.forEach(cls => {
-            const classDiv = document.createElement('div');
-            classDiv.style.margin = '10px 0';
-            classDiv.innerHTML = `
-                <strong>${cls.class_name}</strong> (Code: ${cls.class_code})
-                <button onclick="selectSavedClass('${cls.id}', '${cls.class_code}', '${cls.class_name}')">Select</button>
-                <button onclick="removeSavedClass('${cls.id}')">Remove</button>
-            `;
-            savedClassesDiv.appendChild(classDiv);
+async function loadSavedClasses() {
+    try {
+        // Query enrollments table for student's enrolled classes
+        const response = await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/enrollments?student_id=eq.${currentStudent.student_id}`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            }
         });
         
-        document.getElementById('join-section').appendChild(savedClassesDiv);
+        const enrollments = await response.json();
+        
+        // Display enrolled classes if any exist
+        if (Array.isArray(enrollments) && enrollments.length > 0) {
+            const savedClassesDiv = document.createElement('div');
+            savedClassesDiv.id = 'saved-classes';
+            savedClassesDiv.innerHTML = '<h3>Your Classes:</h3>';
+            
+            // Fetch class details for each enrollment
+            for (const enrollment of enrollments) {
+                try {
+                    const classResponse = await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/classes?id=eq.${enrollment.class_id}`, {
+                        method: 'GET',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const classes = await classResponse.json();
+                    
+                    if (Array.isArray(classes) && classes.length > 0) {
+                        const cls = classes[0];
+                        const classDiv = document.createElement('div');
+                        classDiv.style.margin = '10px 0';
+                        classDiv.innerHTML = `
+                            <strong>${cls.class_name}</strong> (Code: ${cls.class_code})
+                            <button onclick="selectSavedClass('${cls.id}', '${cls.class_code}', '${cls.class_name}')">Select</button>
+                        `;
+                        savedClassesDiv.appendChild(classDiv);
+                    }
+                } catch (error) {
+                    console.error('Error fetching class details:', error);
+                }
+            }
+            
+            document.getElementById('join-section').appendChild(savedClassesDiv);
+        }
+    } catch (error) {
+        console.error('Error loading enrolled classes:', error);
     }
 }
 
 /**
- * Select a previously saved class
+ * Select a previously enrolled class
  * @param {string} classId
  * @param {string} classCode 
  * @param {string} className
@@ -190,7 +220,7 @@ async function selectSavedClass(classId, classCode, className) {
         const classes = await response.json();
         
         if (!Array.isArray(classes) || classes.length === 0) {
-            alert('This class no longer exists. Please remove it from your saved classes.');
+            alert('This class no longer exists.');
             return;
         }
         
@@ -212,22 +242,9 @@ async function selectSavedClass(classId, classCode, className) {
 }
 
 /**
- * Remove a class from saved classes
- * @param {string} classId - The class ID to remove
- */
-function removeSavedClass(classId) {
-    let savedClasses = JSON.parse(localStorage.getItem('savedClasses') || '[]');
-    savedClasses = savedClasses.filter(cls => cls.id !== classId);
-    localStorage.setItem('savedClasses', JSON.stringify(savedClasses));
-    
-    // Reload the page to update the UI
-    location.reload();
-}
-
-/**
  * Join a class using the provided class code
  * Validates the class code exists and stores student information
- * Saves the class to localStorage for future use
+ * Enrolls student in the class in the database
  * Note: Uses RPC function for class lookup
  */
 async function joinClass() {
@@ -260,34 +277,48 @@ async function joinClass() {
         // Store class information
         currentClass = classes[0];
         
-        // Save class to localStorage if not already saved
-        let savedClasses = JSON.parse(localStorage.getItem('savedClasses') || '[]');
-        const classExists = savedClasses.some(cls => cls.id === currentClass.id);
-        if (!classExists) {
-            savedClasses.push({
-                id: currentClass.id,
-                class_code: currentClass.class_code,
-                class_name: currentClass.class_name
-            });
-            localStorage.setItem('savedClasses', JSON.stringify(savedClasses));
+        // Check if student is already enrolled in this class
+        const existingEnrollmentResponse = await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/enrollments?class_id=eq.${currentClass.id}&student_id=eq.${currentStudent.student_id}`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const existingEnrollment = await existingEnrollmentResponse.json();
+        
+        if (Array.isArray(existingEnrollment) && existingEnrollment.length > 0) {
+            // Student is already enrolled, just proceed to marking section
+            document.getElementById('join-section').style.display = 'none';
+            document.getElementById('marking-section').style.display = 'block';
+            document.getElementById('class-info').textContent = `Joined: ${currentClass.class_name} (Code: ${classCode})`;
+            
+            // Start listening for marking signals from teacher
+            listenForMarkingSignal();
+            return;
         }
         
-        // Enroll student in the class
+        // Enroll student in the class using direct REST API
         try {
-            await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/enroll_student_in_class', {
+            await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/enrollments', {
                 method: 'POST',
                 headers: {
                     'apikey': SUPABASE_KEY,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
                 },
                 body: JSON.stringify({
-                    p_class_id: currentClass.id,
-                    p_student_name: currentStudent.name,
-                    p_student_id: currentStudent.student_id
+                    class_id: currentClass.id,
+                    student_name: currentStudent.name,
+                    student_id: currentStudent.student_id
                 })
             });
+            console.log('Student enrolled successfully');
         } catch (error) {
-            console.warn('Enrollment notification:', error);
+            console.error('Error enrolling student:', error);
+            alert('Error enrolling in class. Please try again.');
+            return;
         }
         
         // Update UI to show marking section
@@ -393,6 +424,23 @@ async function markAttendance() {
         }
         
         const session = sessions[0];
+        
+        // Check if student has already marked attendance for this session
+        const existingAttendanceResponse = await fetch(`https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/attendance_records?session_id=eq.${session.id}&student_id=eq.${currentStudent.student_id}`, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const existingAttendance = await existingAttendanceResponse.json();
+        
+        if (Array.isArray(existingAttendance) && existingAttendance.length > 0) {
+            statusMessage.textContent = '✓ You have already marked your attendance for this session.';
+            document.getElementById('mark-button').style.display = 'none';
+            return;
+        }
         
         // Check if teacher location is available
         if (session.teacher_lat === null || session.teacher_lng === null) {

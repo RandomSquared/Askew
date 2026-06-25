@@ -476,7 +476,7 @@ async function teacherLogin() {
         }
         
         const teacher = teachers[0];
-        console.log('Teacher found:', { name: teacher.name, teacher_id: teacher.teacher_id, has_password_hash: !!teacher.password_hash, has_password: !!teacher.password, approved: teacher.approved });
+        console.log('Teacher found:', { name: teacher.name, teacher_id: teacher.teacher_id, has_password_hash: !!teacher.password_hash, approved: teacher.approved });
         
         // Check if teacher is approved
         if (!teacher.approved) {
@@ -537,41 +537,6 @@ async function teacherLogin() {
                 showStatus('Invalid credentials. Please check your teacher ID and password.');
                 return;
             }
-        } else if (teacher.password) {
-            // Legacy: check plain text password (should be migrated)
-            console.log('Checking legacy plain text password');
-            if (teacher.password !== password) {
-                console.error('Password mismatch. Expected:', teacher.password, 'Got:', password);
-                showStatus('Invalid credentials. Please check your teacher ID and password.');
-                return;
-            }
-            
-            console.log('Plain text password matched, migrating to hashed password');
-            // Migrate to hashed password
-            const hashResponse = await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/hash_password', {
-                method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ p_password: password })
-            });
-            const hashedPassword = await hashResponse.json();
-            console.log('Hashed password generated');
-            
-            // Update teacher record with hashed password
-            await fetch('https://ajzvuilyjuhxcyugjazr.supabase.co/rest/v1/rpc/update_teacher_password_hash', {
-                method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    p_teacher_id: teacher.id,
-                    p_password_hash: hashedPassword
-                })
-            });
-            console.log('Password migration complete');
         } else {
             showStatus('Invalid credentials. Please check your teacher ID and password.');
             return;
