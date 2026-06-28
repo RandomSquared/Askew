@@ -25,9 +25,7 @@
         <!-- Section for joining a class -->
         <div id="join-section">
             <h2>Join Class</h2>
-            <!-- Input for class code -->
             <input type="text" id="class-code" placeholder="Enter class code">
-            <!-- Button to join the class -->
             <button onclick="joinClass()">Join Class</button>
         </div>
         
@@ -38,24 +36,16 @@
             
             <!-- Mark attendance button (hidden until signal received) -->
             <button id="mark-button" onclick="markAttendance()" style="display: none;">Mark Me Here</button>
-            
-            <!-- Status message display -->
             <p id="status-message"></p>
         </div>
-                <!-- Navigation buttons -->
         <div class="button-row">
             <button onclick="backToDashboard()">Back to Dashboard</button>
             <button onclick="logout()">Logout</button>
         </div>
     </div>
     
-    <!-- Load shared utilities -->
     <script src="shared.js"></script>
-    <!-- Initialize dark mode -->
-    <script>
-        initializeDarkMode();
-    </script>
-    <!-- Load student-specific logic -->
+    <script>initializeDarkMode();</script>
     <script src="student.js"></script>
 </body>
 </html>

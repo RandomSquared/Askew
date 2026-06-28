@@ -1,5 +1,5 @@
 /*
- * Login Logic - Attendance System
+ * Login Page - Askew
  * 
  * This file handles all authentication functionality:
  * - Tab switching between student login, student signup, and teacher login

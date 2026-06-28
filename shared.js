@@ -1,5 +1,5 @@
 /*
- * Shared Utilities - Attendance System
+ * Shared functions - Askew
  * 
  * This file contains shared utility functions used by both student and teacher interfaces.
  * Functions include:

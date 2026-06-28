@@ -1,5 +1,5 @@
 /*
- * Teacher Signup Logic - Attendance System
+ * Teacher Signup - Askew
  * 
  * This file handles teacher signup functionality:
  * - Teacher signup with name and password
@@ -124,7 +124,7 @@ function validatePassword(password) {
 
 /**
  * Generate a teacher ID (TEA + 6 digits)
- * @returns {string} - Generated teacher ID
+ * @returns {string}
  */
 function generateTeacherId() {
     return 'TEA' + Math.floor(100000 + Math.random() * 900000);

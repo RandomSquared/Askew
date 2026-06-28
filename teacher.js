@@ -1,5 +1,5 @@
 /*
- * Teacher Interface Logic - Attendance System
+ * Teacher Dashboard
  * 
  * This file handles all teacher-side functionality:
  * - Teacher login with simple password verification
@@ -13,10 +13,9 @@
  */
 
 // Global variables to store teacher and session information
-let currentTeacher = null; // Stores teacher name and ID
-let currentSessionId = null; // ID of the active marking session
-let attendancePollInterval = null; // Interval for polling attendance updates
-
+let currentTeacher = null; 
+let currentSessionId = null; 
+let attendancePollInterval = null; 
 // Check teacher login on page load
 window.addEventListener('DOMContentLoaded', checkTeacherLogin);
 
@@ -408,11 +407,9 @@ function monitorAttendance() {
             
             // Calculate present and absent counts
             const presentCount = records.filter(r => r.status === 'present').length;
-            const absentCount = records.filter(r => r.status === 'absent').length;
             
             // Update UI with counts
             document.getElementById('present-count').textContent = presentCount;
-            document.getElementById('absent-count').textContent = absentCount;
             
             // Update attendance list
             const attendanceList = document.getElementById('attendance-list');
